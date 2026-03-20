@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="backend.modules.registration.mapper.RegistrationMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO registration
+            (activity_id, user_id, status, remark)
+        VALUES
+            (#{activityId}, #{userId}, #{status}, #{remark})
+    </insert>
+
+    <select id="selectById" resultType="backend.modules.registration.entity.Registration">
+        SELECT * FROM registration
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="selectByActivityAndUser" resultType="backend.modules.registration.entity.Registration">
+        SELECT * FROM registration
+        WHERE activity_id = #{activityId} AND user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <!-- 志愿者查询自己的报名列表，JOIN activity/position 获取名称 -->
+    <select id="selectPageByUser" resultType="backend.modules.registration.dto.RegistrationVO">
+        SELECT
+            r.id,
+            r.activity_id,
+            a.title          AS activity_title,
+            r.user_id,
+            u.username,
+            u.real_name,
+            r.position_id,
+            p.name           AS position_name,
+            r.status,
+            r.remark,
+            r.score,
+            r.created_at
+        FROM registration r
+        LEFT JOIN activity   a ON a.id = r.activity_id AND a.deleted = 0
+        LEFT JOIN sys_user   u ON u.id = r.user_id     AND u.deleted = 0
+        LEFT JOIN `position` p ON p.id = r.position_id AND p.deleted = 0
+        WHERE r.user_id = #{userId}
+        <if test="query.status != null">
+            AND r.status = #{query.status}
+        </if>
+        ORDER BY r.created_at DESC
+        LIMIT #{query.offset}, #{query.pageSize}
+    </select>
+
+    <select id="countPageByUser" resultType="long">
+        SELECT COUNT(*) FROM registration r
+        WHERE r.user_id = #{userId}
+        <if test="query.status != null">
+            AND r.status = #{query.status}
+        </if>
+    </select>
+
+    <!-- 管理员查询某活动的报名列表 -->
+    <select id="selectPageByActivity" resultType="backend.modules.registration.dto.RegistrationVO">
+        SELECT
+            r.id,
+            r.activity_id,
+            a.title          AS activity_title,
+            r.user_id,
+            u.username,
+            u.real_name,
+            r.position_id,
+            p.name           AS position_name,
+            r.status,
+            r.remark,
+            r.score,
+            r.created_at
+        FROM registration r
+        LEFT JOIN activity   a ON a.id = r.activity_id AND a.deleted = 0
+        LEFT JOIN sys_user   u ON u.id = r.user_id     AND u.deleted = 0
+        LEFT JOIN `position` p ON p.id = r.position_id AND p.deleted = 0
+        WHERE r.activity_id = #{activityId}
+        <if test="query.status != null">
+            AND r.status = #{query.status}
+        </if>
+        ORDER BY r.created_at DESC
+        LIMIT #{query.offset}, #{query.pageSize}
+    </select>
+
+    <select id="countPageByActivity" resultType="long">
+        SELECT COUNT(*) FROM registration r
+        WHERE r.activity_id = #{activityId}
+        <if test="query.status != null">
+            AND r.status = #{query.status}
+        </if>
+    </select>
+
+    <update id="updateStatus">
+        UPDATE registration SET status = #{status}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateScore">
+        UPDATE registration SET score = #{score}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 取消后重新报名：复用已有记录，重置状态和留言 -->
+    <update id="reApply">
+        UPDATE registration
+        SET status = 0, remark = #{remark}, score = NULL, position_id = NULL, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 派岗：设置岗位ID + 状态改为已派岗(3)；触发器 trg_registration_assign_position 自动累加 position.assigned_count -->
+    <update id="assignPosition">
+        UPDATE registration
+        SET position_id = #{positionId}, status = 3, updated_at = NOW()
+        WHERE id = #{id} AND status IN (0, 1)
+    </update>
+
+    <!-- 取消派岗：清空岗位ID + 状态回退至已通过(1)；触发器自动递减 position.assigned_count -->
+    <update id="cancelAssign">
+        UPDATE registration
+        SET position_id = NULL, status = 1, updated_at = NOW()
+        WHERE id = #{id} AND status = 3
+    </update>
+
+</mapper>

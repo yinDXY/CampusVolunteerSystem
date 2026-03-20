@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="backend.modules.checkin.mapper.QrTokenMapper">
+
+    <select id="selectByActivityId" resultType="backend.modules.checkin.entity.QrToken">
+        SELECT * FROM qr_token
+        WHERE activity_id = #{activityId}
+        LIMIT 1
+    </select>
+
+    <!--
+        INSERT ... ON DUPLICATE KEY UPDATE 利用 uk_activity_token(activity_id) 唯一键。
+        首次调用时 INSERT，后续调用时 UPDATE token 和 expire_time。
+    -->
+    <insert id="upsert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO qr_token (activity_id, token, expire_time)
+        VALUES (#{activityId}, #{token}, #{expireTime})
+        ON DUPLICATE KEY UPDATE
+            token       = VALUES(token),
+            expire_time = VALUES(expire_time)
+    </insert>
+
+    <!-- 批量刷新：所有现有记录生成新 UUID，过期时间顺延 1 分钟 -->
+    <update id="refreshAll">
+        UPDATE qr_token
+        SET token       = UUID(),
+            expire_time = DATE_ADD(NOW(), INTERVAL 1 MINUTE)
+    </update>
+
+    <select id="selectAllActivityIds" resultType="long">
+        SELECT activity_id FROM qr_token
+    </select>
+
+</mapper>

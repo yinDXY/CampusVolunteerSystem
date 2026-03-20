@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="backend.modules.dispatch.mapper.DispatchMapper">
+
+    <!--
+        岗位摘要信息：名称、名额、已派岗数、需求标签列表。
+        无报名数据时也能正常返回。
+    -->
+    <select id="selectPositionInfo" resultType="backend.modules.dispatch.dto.DispatchRecommendVO">
+        SELECT
+            p.id                                                              AS position_id,
+            p.name                                                            AS position_name,
+            p.quota,
+            p.assigned_count,
+            p.required_hours,
+            COUNT(DISTINCT pt.tag_id)                                         AS required_tag_count,
+            GROUP_CONCAT(DISTINCT t.name ORDER BY t.name SEPARATOR ',')       AS required_tags
+        FROM `position` p
+        LEFT JOIN position_tag pt ON pt.position_id = p.id
+        LEFT JOIN tag t           ON t.id = pt.tag_id
+        WHERE p.id = #{positionId} AND p.deleted = 0
+        GROUP BY p.id, p.name, p.quota, p.assigned_count, p.required_hours
+    </select>
+
+    <!--
+        智能匹配核心 SQL：标签交集 + 时长达标加成
+
+        匹配算法：
+          match_score = COUNT(命中的需求标签) + IF(total_hours >= required_hours, 1, 0)
+
+        候选范围：与该岗位同属一个活动、且报名状态为 待审核(0) 或 已通过(1) 的志愿者。
+
+        分组：每位志愿者汇聚为一行，同时展示其全部技能标签（volunteertags）供管理员参考。
+        排序：match_score DESC, total_hours DESC
+           → 完全匹配者排前，同等匹配内经验更丰富者优先。
+    -->
+    <select id="selectCandidates" resultType="backend.modules.dispatch.dto.DispatchCandidateVO">
+        SELECT
+            r.id                                                               AS registration_id,
+            r.user_id,
+            u.real_name,
+            u.student_id,
+            u.total_hours,
+            COUNT(DISTINCT pt.tag_id)                                          AS required_count,
+            COUNT(DISTINCT CASE WHEN ut_match.tag_id IS NOT NULL
+                                 THEN pt.tag_id END)                           AS matched_count,
+            (COUNT(DISTINCT CASE WHEN ut_match.tag_id IS NOT NULL
+                                  THEN pt.tag_id END)
+                + IF(u.total_hours >= p.required_hours, 1, 0))                AS match_score,
+            GROUP_CONCAT(DISTINCT t_all.name
+                         ORDER BY t_all.name SEPARATOR ',')                   AS volunteer_tags
+        FROM `position` p
+        INNER JOIN registration r    ON r.activity_id = p.activity_id
+                                    AND r.status IN (0, 1)
+        INNER JOIN sys_user u        ON u.id = r.user_id
+                                    AND u.deleted = 0
+                                    AND u.status = 1
+        LEFT  JOIN position_tag pt   ON pt.position_id = p.id
+        -- 取志愿者命中的需求标签（交集）
+        LEFT  JOIN user_tag ut_match ON ut_match.user_id = r.user_id
+                                    AND ut_match.tag_id = pt.tag_id
+        -- 取志愿者全部技能标签（用于展示）
+        LEFT  JOIN user_tag ut_all   ON ut_all.user_id = r.user_id
+        LEFT  JOIN tag t_all         ON t_all.id = ut_all.tag_id
+                                    AND t_all.category = 'SKILL'
+        WHERE p.id = #{positionId} AND p.deleted = 0
+        GROUP BY r.id, r.user_id, u.real_name, u.student_id,
+                 u.total_hours, p.required_hours
+        ORDER BY match_score DESC, u.total_hours DESC
+    </select>
+
+</mapper>

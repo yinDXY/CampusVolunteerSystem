@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="backend.modules.position.mapper.PositionMapper">
+
+    <!-- position 是 MySQL 保留字，使用反引号转义 -->
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `position`
+            (activity_id, name, description, quota, required_hours)
+        VALUES
+            (#{activityId}, #{name}, #{description}, #{quota}, #{requiredHours})
+    </insert>
+
+    <select id="selectById" resultType="backend.modules.position.entity.Position">
+        SELECT * FROM `position`
+        WHERE id = #{id} AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <select id="selectByActivityId" resultType="backend.modules.position.dto.PositionVO">
+        SELECT id, activity_id, name, description, quota, assigned_count, required_hours, created_at
+        FROM `position`
+        WHERE activity_id = #{activityId} AND deleted = 0
+        ORDER BY created_at ASC
+    </select>
+
+    <update id="updateById">
+        UPDATE `position`
+        SET name           = #{name},
+            description    = #{description},
+            quota          = #{quota},
+            required_hours = #{requiredHours},
+            updated_at     = NOW()
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="deleteById">
+        UPDATE `position` SET deleted = 1, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>
