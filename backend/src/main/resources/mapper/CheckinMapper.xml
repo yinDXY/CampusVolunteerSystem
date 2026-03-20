@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="backend.modules.checkin.mapper.CheckinMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO checkin
+            (activity_id, user_id, registration_id, checkin_time, qr_token, is_late)
+        VALUES
+            (#{activityId}, #{userId}, #{registrationId}, #{checkinTime}, #{qrToken}, #{isLate})
+    </insert>
+
+    <select id="selectByActivityAndUser" resultType="backend.modules.checkin.entity.Checkin">
+        SELECT * FROM checkin
+        WHERE activity_id = #{activityId} AND user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <update id="updateCheckout">
+        UPDATE checkin
+        SET checkout_time   = #{checkoutTime},
+            duration_hours  = #{durationHours}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 管理员查看活动签到列表，JOIN 用户和活动 -->
+    <select id="selectListByActivity" resultType="backend.modules.checkin.dto.CheckinVO">
+        SELECT
+            c.id,
+            c.activity_id,
+            a.title          AS activity_title,
+            c.user_id,
+            u.username,
+            u.real_name,
+            c.checkin_time,
+            c.checkout_time,
+            c.duration_hours,
+            c.is_late
+        FROM checkin c
+        LEFT JOIN activity  a ON a.id = c.activity_id AND a.deleted = 0
+        LEFT JOIN sys_user  u ON u.id = c.user_id     AND u.deleted = 0
+        WHERE c.activity_id = #{activityId}
+        ORDER BY c.checkin_time DESC
+    </select>
+
+</mapper>

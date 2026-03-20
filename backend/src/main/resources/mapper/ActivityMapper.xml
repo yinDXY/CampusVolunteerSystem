@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="backend.modules.activity.mapper.ActivityMapper">
+
+    <!-- 启用 map-underscore-to-camel-case，简单字段自动映射 -->
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO activity
+            (title, description, cover_url, location,
+             start_time, end_time, sign_start_time, sign_end_time,
+             total_quota, status, creator_id)
+        VALUES
+            (#{title}, #{description}, #{coverUrl}, #{location},
+             #{startTime}, #{endTime}, #{signStartTime}, #{signEndTime},
+             #{totalQuota}, #{status}, #{creatorId})
+    </insert>
+
+    <select id="selectById" resultType="backend.modules.activity.entity.Activity">
+        SELECT * FROM activity
+        WHERE id = #{id} AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <select id="selectVOById" resultType="backend.modules.activity.dto.ActivityVO">
+        SELECT a.*, u.real_name AS creator_name
+        FROM activity a
+        LEFT JOIN sys_user u ON u.id = a.creator_id AND u.deleted = 0
+        WHERE a.id = #{id} AND a.deleted = 0
+        LIMIT 1
+    </select>
+
+    <update id="updateById">
+        UPDATE activity
+        SET title          = #{title},
+            description    = #{description},
+            cover_url      = #{coverUrl},
+            location       = #{location},
+            start_time     = #{startTime},
+            end_time       = #{endTime},
+            sign_start_time = #{signStartTime},
+            sign_end_time  = #{signEndTime},
+            total_quota    = #{totalQuota},
+            updated_at     = NOW()
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="deleteById">
+        UPDATE activity SET deleted = 1, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE activity SET status = #{status}, updated_at = NOW()
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 分页查询：JOIN creator，支持关键词+状态筛选 -->
+    <select id="selectPage" resultType="backend.modules.activity.dto.ActivityVO">
+        SELECT a.*, u.real_name AS creator_name
+        FROM activity a
+        LEFT JOIN sys_user u ON u.id = a.creator_id AND u.deleted = 0
+        WHERE a.deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (a.title LIKE CONCAT('%', #{keyword}, '%')
+              OR a.description LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="status != null">
+            AND a.status = #{status}
+        </if>
+        ORDER BY a.created_at DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 总数查询（与分页条件一致）-->
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM activity a
+        WHERE a.deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (a.title LIKE CONCAT('%', #{keyword}, '%')
+              OR a.description LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="status != null">
+            AND a.status = #{status}
+        </if>
+    </select>
+
+    <update id="incrementSignedCount">
+        UPDATE activity SET signed_count = signed_count + 1, updated_at = NOW()
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+</mapper>
