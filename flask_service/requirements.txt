@@ -1,0 +1,6 @@
+# 校园志愿服务管理系统 - Flask 雷达图微服务依赖
+# 安装方式：pip install -r requirements.txt
+
+flask>=3.0.0
+matplotlib>=3.8.0
+numpy>=1.26.0

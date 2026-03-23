@@ -36,7 +36,10 @@ public enum ResultCode {
     ALREADY_CHECKED_IN(5002, "您已签到，请勿重复操作"),
     ALREADY_CHECKED_OUT(5003, "您已完成签退，请勿重复操作"),
     CHECKIN_NOT_FOUND(5004, "签到记录不存在"),
-    REGISTRATION_NOT_APPROVED(5005, "报名未审核通过，无法签到");
+    REGISTRATION_NOT_APPROVED(5005, "报名未审核通过，无法签到"),
+
+    // 画像相关 6xxx
+    PROFILE_NOT_FOUND(6001, "用户画像不存在（仅志愿者角色拥有画像）");
 
     private final int code;
     private final String msg;
