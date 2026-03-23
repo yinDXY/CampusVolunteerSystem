@@ -68,16 +68,10 @@ BEGIN
         WHERE activity_id  = p_activity_id
           AND checkout_time IS NULL;
 
-        -- 4. 批量累加时长到用户总时长
-        --    只累加本次结算中刚补签退的记录（checkout_time 刚被设为 v_end_time 的）
-        UPDATE sys_user u
-        INNER JOIN checkin c ON c.user_id = u.id
-        SET u.total_hours = u.total_hours + c.duration_hours
-        WHERE c.activity_id    = p_activity_id
-          AND c.checkout_time  = v_end_time  -- 刚补充的签退
-          AND c.duration_hours IS NOT NULL;
-
-        -- 5. 成就解锁由 trg_user_achievement_unlock 触发器自动处理
+        -- 4. total_hours 累加 & 成就解锁均由触发器自动完成：
+        --    trg_checkin_checkout_update  → 签退时自动累加 sys_user.total_hours
+        --    trg_user_achievement_unlock  → total_hours 更新后自动解锁成就
+        --    此处无需再手动累加，否则会造成时长二次重复叠加。
 
     COMMIT;
 

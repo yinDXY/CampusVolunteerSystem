@@ -128,7 +128,9 @@ SELECT
     a.total_quota,
     a.signed_count,
     COUNT(DISTINCT c.id)                                                AS checkin_count,
-    SUM(DISTINCT p.quota)                                               AS position_total_quota,
+    -- 岗位配额使用子查询求和，避免与 registration/checkin 多对多 JOIN 产生笛卡尔积导致重复叠加
+    (SELECT SUM(sub.quota) FROM `position` sub
+     WHERE sub.activity_id = a.id AND sub.deleted = 0)                  AS position_total_quota,
     COUNT(DISTINCT p.id)                                                AS position_count,
     GROUP_CONCAT(DISTINCT t.name ORDER BY t.name SEPARATOR ',')        AS activity_tags,
     ROUND(IFNULL(AVG(r.activity_score), 0), 2)                         AS avg_activity_score,
