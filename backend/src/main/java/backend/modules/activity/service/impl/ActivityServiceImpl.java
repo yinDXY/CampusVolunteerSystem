@@ -85,6 +85,9 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     @Transactional
     public void updateStatus(Long id, Integer status, Long operatorId, Integer operatorRole) {
+        if (status == null || status < 0 || status > 4) {
+            throw new AppException(ResultCode.BAD_REQUEST);
+        }
         Activity existing = activityMapper.selectById(id);
         if (existing == null) throw new AppException(ResultCode.ACTIVITY_NOT_FOUND);
         checkOwnerOrAdmin(existing.getCreatorId(), operatorId, operatorRole);

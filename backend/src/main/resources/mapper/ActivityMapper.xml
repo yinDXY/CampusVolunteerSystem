@@ -57,14 +57,14 @@
     </update>
 
     <!-- 分页查询：JOIN creator，支持关键词+状态筛选 -->
+    <!-- 关键词搜索使用 FULLTEXT ngram 索引（需 innodb_ft_min_token_size=2），避免 LIKE '%...%' 全表扫描 -->
     <select id="selectPage" resultType="backend.modules.activity.dto.ActivityVO">
         SELECT a.*, u.real_name AS creator_name
         FROM activity a
         LEFT JOIN sys_user u ON u.id = a.creator_id AND u.deleted = 0
         WHERE a.deleted = 0
         <if test="keyword != null and keyword != ''">
-            AND (a.title LIKE CONCAT('%', #{keyword}, '%')
-              OR a.description LIKE CONCAT('%', #{keyword}, '%'))
+            AND MATCH(a.title, a.description) AGAINST (#{keyword} IN BOOLEAN MODE)
         </if>
         <if test="status != null">
             AND a.status = #{status}
@@ -78,8 +78,7 @@
         SELECT COUNT(*) FROM activity a
         WHERE a.deleted = 0
         <if test="keyword != null and keyword != ''">
-            AND (a.title LIKE CONCAT('%', #{keyword}, '%')
-              OR a.description LIKE CONCAT('%', #{keyword}, '%'))
+            AND MATCH(a.title, a.description) AGAINST (#{keyword} IN BOOLEAN MODE)
         </if>
         <if test="status != null">
             AND a.status = #{status}
