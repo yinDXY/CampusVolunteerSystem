@@ -1,0 +1,7 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="50" cy="50" r="45" fill="#FFD700" stroke="#FFA500" stroke-width="3"/>
+  <circle cx="50" cy="50" r="35" fill="#FFEC8B" stroke="#FFD700" stroke-width="2"/>
+  <text x="50" y="45" text-anchor="middle" font-size="12" font-family="Arial" fill="#8B6914" font-weight="bold">志愿</text>
+  <text x="50" y="62" text-anchor="middle" font-size="12" font-family="Arial" fill="#8B6914" font-weight="bold">之光</text>
+  <text x="50" y="80" text-anchor="middle" font-size="9" font-family="Arial" fill="#8B6914">100h</text>
+</svg>
