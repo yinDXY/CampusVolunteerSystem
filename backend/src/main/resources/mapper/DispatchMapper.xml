@@ -30,7 +30,7 @@
         匹配算法：
           match_score = COUNT(命中的需求标签) + IF(total_hours >= required_hours, 1, 0)
 
-        候选范围：与该岗位同属一个活动、且报名状态为 待审核(0) 或 已通过(1) 的志愿者。
+        候选范围：与该岗位同属一个活动、且报名状态为 已通过(1) 的志愿者（只有审核通过才可派岗）。
 
         分组：每位志愿者汇聚为一行，同时展示其全部技能标签（volunteertags）供管理员参考。
         排序：match_score DESC, total_hours DESC
@@ -53,7 +53,7 @@
                          ORDER BY t_all.name SEPARATOR ',')                   AS volunteer_tags
         FROM `position` p
         INNER JOIN registration r    ON r.activity_id = p.activity_id
-                                    AND r.status IN (0, 1)
+                                    AND r.status = 1
         INNER JOIN sys_user u        ON u.id = r.user_id
                                     AND u.deleted = 0
                                     AND u.status = 1
