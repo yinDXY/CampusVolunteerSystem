@@ -59,11 +59,11 @@ public class DispatchServiceImpl implements DispatchService {
             throw new AppException(ResultCode.POSITION_QUOTA_FULL);
         }
 
-        // 2. 验证报名记录存在且状态合法（待审核或已通过）
+        // 2. 验证报名记录存在且状态合法（仅已通过=1 可派岗）
         Registration reg = registrationMapper.selectById(registrationId);
         if (reg == null) throw new AppException(ResultCode.REGISTRATION_NOT_FOUND);
         if (reg.getStatus() == 3) throw new AppException(ResultCode.ALREADY_ASSIGNED);
-        if (reg.getStatus() != 0 && reg.getStatus() != 1) {
+        if (reg.getStatus() != 1) {
             throw new AppException(ResultCode.ACTIVITY_STATUS_ERROR);
         }
 

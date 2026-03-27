@@ -18,7 +18,7 @@ public interface DispatchMapper {
 
     /**
      * 智能匹配：查询该岗位下所有候选志愿者并计算标签交集匹配分。
-     * 候选人范围：同活动下 status IN (0=待审核, 1=已通过) 的报名记录。
+     * 候选人范围：同活动下 status = 1（已通过审核）的报名记录。
      * 结果按 match_score DESC, total_hours DESC 排序。
      */
     List<DispatchCandidateVO> selectCandidates(@Param("positionId") Long positionId);

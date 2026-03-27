@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="backend.modules.stats.mapper.StatsMapper">
+
+    <!-- 排行榜：直接读缓存表，已由存储过程 proc_refresh_leaderboard 每小时刷新 -->
+    <select id="selectLeaderboard" resultType="backend.modules.stats.dto.LeaderboardVO">
+        SELECT
+            rank_no,
+            user_id,
+            real_name,
+            avatar_url,
+            total_hours,
+            activity_count,
+            refreshed_at
+        FROM leaderboard_cache
+        ORDER BY rank_no ASC
+    </select>
+
+    <!-- 活动热度：查询视图，按签到人数降序 -->
+    <select id="selectActivityHeat" resultType="backend.modules.stats.dto.ActivityHeatVO">
+        SELECT
+            activity_id,
+            title,
+            location,
+            start_time,
+            end_time,
+            activity_status,
+            total_quota,
+            signed_count,
+            checkin_count,
+            position_total_quota,
+            position_count,
+            activity_tags,
+            avg_activity_score,
+            comment_count,
+            creator_id,
+            creator_name
+        FROM v_activity_heat
+        ORDER BY checkin_count DESC, signed_count DESC
+    </select>
+
+    <!-- 参与趋势：按月统计当年完成签退的唯一志愿者数和活动数 -->
+    <select id="selectTrend" resultType="backend.modules.stats.dto.TrendVO">
+        SELECT
+            MONTH(c.checkin_time)           AS month,
+            COUNT(DISTINCT c.user_id)       AS participant_count,
+            COUNT(DISTINCT c.activity_id)   AS activity_count
+        FROM checkin c
+        WHERE YEAR(c.checkin_time) = #{year}
+          AND c.duration_hours IS NOT NULL
+        GROUP BY MONTH(c.checkin_time)
+        ORDER BY month ASC
+    </select>
+
+</mapper>

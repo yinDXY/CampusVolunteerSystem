@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="backend.modules.achievement.mapper.AchievementMapper">
+
+    <!-- 所有成就定义，按解锁门槛升序 -->
+    <select id="selectAll" resultType="backend.modules.achievement.entity.Achievement">
+        SELECT id, name, description, icon_url, required_hours, badge_level, created_at
+        FROM achievement
+        ORDER BY required_hours ASC
+    </select>
+
+    <!-- 志愿者已解锁的成就，JOIN 获取成就详情 -->
+    <select id="selectUnlockedByUserId" resultType="backend.modules.achievement.dto.UserAchievementVO">
+        SELECT
+            a.id            AS achievement_id,
+            a.name,
+            a.description,
+            a.icon_url,
+            a.badge_level,
+            a.required_hours,
+            ua.unlocked_at
+        FROM user_achievement ua
+        INNER JOIN achievement a ON a.id = ua.achievement_id
+        WHERE ua.user_id = #{userId}
+        ORDER BY a.required_hours ASC
+    </select>
+
+    <!-- 已解锁成就 ID 集合，用于批量判断 -->
+    <select id="selectUnlockedIdsByUserId" resultType="java.lang.Long">
+        SELECT achievement_id
+        FROM user_achievement
+        WHERE user_id = #{userId}
+    </select>
+
+</mapper>

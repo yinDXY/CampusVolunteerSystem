@@ -44,10 +44,8 @@ public class RegistrationServiceImpl implements RegistrationService {
                 throw new AppException(ResultCode.ALREADY_REGISTERED);
             }
             // 已取消 → 复用记录，UPDATE 重置为待审核，避免触发唯一键冲突
+            // signed_count+1 由 trg_registration_status_update 触发器完成（status: 4→0 时自动+1）
             registrationMapper.reApply(existing.getId(), dto.getRemark());
-            // signed_count +1 由触发器 trg_registration_insert 触发（INSERT），
-            // 此处是 UPDATE，需手动 +1
-            activityMapper.incrementSignedCount(dto.getActivityId());
             return existing.getId();
         }
 

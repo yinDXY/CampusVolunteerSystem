@@ -111,10 +111,11 @@
     </update>
 
     <!-- 派岗：设置岗位ID + 状态改为已派岗(3)；触发器 trg_registration_assign_position 自动累加 position.assigned_count -->
+    <!-- 只允许对已通过(status=1)的报名进行派岗，待审核(0)须先审核通过 -->
     <update id="assignPosition">
         UPDATE registration
         SET position_id = #{positionId}, status = 3, updated_at = NOW()
-        WHERE id = #{id} AND status IN (0, 1)
+        WHERE id = #{id} AND status = 1
     </update>
 
     <!-- 取消派岗：清空岗位ID + 状态回退至已通过(1)；触发器自动递减 position.assigned_count -->
