@@ -30,8 +30,6 @@ SELECT
     r.status                      AS registration_status,
     r.remark                      AS registration_remark,
     r.score                       AS volunteer_score,
-    r.activity_score              AS activity_score,
-    r.activity_comment            AS activity_comment,
     r.created_at                  AS apply_time,
     p.id                          AS position_id,
     p.name                        AS position_name,
@@ -40,8 +38,7 @@ SELECT
     c.checkin_time,
     c.checkout_time,
     c.duration_hours,
-    c.is_late,
-    c.hash_proof
+    c.is_late
 FROM registration r
 INNER JOIN activity a  ON a.id = r.activity_id AND a.deleted = 0
 INNER JOIN sys_user u  ON u.id = r.user_id     AND u.deleted = 0
@@ -133,8 +130,6 @@ SELECT
      WHERE sub.activity_id = a.id AND sub.deleted = 0)                  AS position_total_quota,
     COUNT(DISTINCT p.id)                                                AS position_count,
     GROUP_CONCAT(DISTINCT t.name ORDER BY t.name SEPARATOR ',')        AS activity_tags,
-    ROUND(IFNULL(AVG(r.activity_score), 0), 2)                         AS avg_activity_score,
-    COUNT(DISTINCT CASE WHEN r.activity_comment IS NOT NULL THEN r.id END) AS comment_count,
     a.creator_id,
     creator.real_name                                                   AS creator_name
 FROM activity a

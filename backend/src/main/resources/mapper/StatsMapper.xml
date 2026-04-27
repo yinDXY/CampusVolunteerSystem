@@ -32,8 +32,6 @@
             position_total_quota,
             position_count,
             activity_tags,
-            avg_activity_score,
-            comment_count,
             creator_id,
             creator_name
         FROM v_activity_heat

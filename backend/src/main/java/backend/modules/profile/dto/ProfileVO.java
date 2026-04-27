@@ -15,6 +15,8 @@ public class ProfileVO {
     private String realName;
     private String studentId;
     private String avatarUrl;
+    private String email;
+    private String phone;
 
     /** 累计志愿时长（小时）*/
     private BigDecimal totalHours;

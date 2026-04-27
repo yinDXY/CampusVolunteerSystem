@@ -63,8 +63,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // 限定指定域名，避免 allowedOriginPatterns(*) + allowCredentials(true) 的安全隐患
-        config.setAllowedOrigins(List.of(allowedOrigin));
+        // 开发阶段允许所有来源（含 file:// 直接打开 HTML 的场景）
+        config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

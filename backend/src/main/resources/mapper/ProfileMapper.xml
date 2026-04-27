@@ -20,19 +20,22 @@
           skill_tags       → skillTags
     -->
     <select id="selectByUserId" resultType="backend.modules.profile.dto.ProfileVO">
-        SELECT user_id,
-               real_name,
-               student_id,
-               avatar_url,
-               total_hours,
-               activity_count,
-               type_diversity,
-               avg_score,
-               punctuality_rate,
-               badge_count,
-               skill_tags
-        FROM v_volunteer_profile
-        WHERE user_id = #{userId}
+        SELECT vp.user_id,
+               vp.real_name,
+               vp.student_id,
+               vp.avatar_url,
+               u.email,
+               u.phone,
+               vp.total_hours,
+               vp.activity_count,
+               vp.type_diversity,
+               vp.avg_score,
+               vp.punctuality_rate,
+               vp.badge_count,
+               vp.skill_tags
+        FROM v_volunteer_profile vp
+        JOIN sys_user u ON u.id = vp.user_id
+        WHERE vp.user_id = #{userId}
     </select>
 
 </mapper>

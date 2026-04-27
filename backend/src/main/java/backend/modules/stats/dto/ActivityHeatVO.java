@@ -18,8 +18,6 @@ public class ActivityHeatVO {
     private Integer positionTotalQuota;
     private Integer positionCount;
     private String activityTags;
-    private BigDecimal avgActivityScore;
-    private Integer commentCount;
     private Long creatorId;
     private String creatorName;
 }
