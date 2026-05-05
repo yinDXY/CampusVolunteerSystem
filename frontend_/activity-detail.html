@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活动详情 - 志愿服务管理系统</title>
+    <link rel="stylesheet" href="css/common.css">
+    <style>
+        .detail-container { max-width: 1200px; margin: 0 auto; padding: 0 24px 48px; }
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); text-decoration: none; margin-bottom: 16px; font-size: 14px; }
+        .back-link:hover { color: var(--primary); }
+
+        .banner { position: relative; height: 220px; border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
+        .banner .bg { width: 100%; height: 100%; }
+        .banner .badge { position: absolute; top: 16px; right: 16px; }
+        .banner .tag-label { position: absolute; bottom: 16px; left: 16px; background: rgba(255,255,255,0.9); padding: 4px 14px; border-radius: 6px; font-size: 13px; }
+
+        .detail-title { font-size: 24px; font-weight: 700; margin-bottom: 20px; }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 48px; margin-bottom: 20px; }
+        .info-item { display: flex; gap: 12px; align-items: flex-start; }
+        .info-item .icon { font-size: 20px; color: var(--primary); flex-shrink: 0; margin-top: 2px; }
+        .info-item .label { font-size: 12px; color: var(--text-secondary); }
+        .info-item .value { font-size: 15px; color: var(--text-primary); font-weight: 500; }
+
+        .section-title { font-size: 18px; font-weight: 600; margin: 24px 0 16px; }
+
+        .position-card { border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; transition: border-color .2s; }
+        .position-card.selected { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+        .position-card .pos-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .position-card .pos-name { font-size: 16px; font-weight: 600; }
+        .position-card .pos-desc { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
+        .position-card .pos-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+        .position-card .pos-tag { background: var(--bg-page); padding: 3px 10px; border-radius: 12px; font-size: 12px; color: var(--text-secondary); }
+        .position-card .pos-quota { font-size: 13px; color: var(--text-secondary); }
+        .position-card .btn-select { flex-shrink: 0; align-self: center; }
+
+        .action-box { border-radius: 10px; padding: 20px 24px; margin-top: 24px; }
+        .action-box.registered { background: #eff6ff; }
+        .action-box.closed { background: var(--bg-page); }
+        .action-box .action-title { font-weight: 600; color: var(--primary); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .action-box .action-info { font-size: 14px; color: var(--primary); }
+
+        @media(max-width:640px) {
+            .info-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="detail-container" id="app">
+        <a href="activity-list.html" class="back-link">‹ 返回活动列表</a>
+        <div id="loading" class="spinner"></div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        requireAuth();
+        renderNavbar('activities');
+
+        const urlParams = new URLSearchParams(location.search);
+        const activityId = Number(urlParams.get('id'));
+        if (!activityId) { location.href = 'activity-list.html'; }
+
+        let activity = null;
+        let positions = [];
+        let myRegistration = null;  // 当前用户在该活动的报名记录
+        let selectedPositionId = null;
+
+        const GRADIENTS = [
+            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        ];
+
+        function getCategoryTag(title, desc) {
+            const text = title + (desc || '');
+            if (/环境|清洁|环保|植树/.test(text)) return '环境保护';
+            if (/敬老|老人|助残|陪伴|孤寡/.test(text)) return '敬老助残';
+            if (/教育|辅导|图书|阅读|课业|支教/.test(text)) return '教育辅导';
+            if (/医疗|救护|健康|义诊/.test(text)) return '医疗救护';
+            if (/文化|宣传|演出|艺术/.test(text)) return '文化宣传';
+            if (/应急|救援|防灾|交通/.test(text)) return '应急救援';
+            return '志愿服务';
+        }
+
+        async function loadAll() {
+            try {
+                const [actData, posData, regData] = await Promise.all([
+                    get(`/api/activities/${activityId}`),
+                    get(`/api/activities/${activityId}/positions`),
+                    get('/api/registrations/my', { pageNum: 1, pageSize: 100 })
+                ]);
+                activity = actData;
+                positions = posData || [];
+
+                // 查找当前用户在该活动的报名
+                const myRegs = (regData.list || []).filter(r => r.activityId === activityId && r.status !== 4);
+                myRegistration = myRegs.length > 0 ? myRegs[0] : null;
+
+                render();
+            } catch (err) {
+                document.getElementById('app').innerHTML = '<a href="activity-list.html" class="back-link">‹ 返回活动列表</a><p style="text-align:center;padding:40px;color:var(--text-secondary)">活动不存在或加载失败</p>';
+            }
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            const st = activityStatusInfo(activity.status);
+            const tag = getCategoryTag(activity.title, activity.description);
+            const grad = GRADIENTS[activity.id % GRADIENTS.length];
+            const dateStr = formatDate(activity.startTime) + (activity.endTime ? ' - ' + formatDate(activity.endTime) : '');
+
+            let html = `<a href="activity-list.html" class="back-link">‹ 返回活动列表</a>`;
+
+            // Banner
+            html += `
+            <div class="banner">
+                <div class="bg" style="background:${grad};"></div>
+                <span class="badge ${st.cls}">${escapeHtml(st.text)}</span>
+                <span class="tag-label">${escapeHtml(tag)}</span>
+            </div>`;
+
+            // Title
+            html += `<h1 class="detail-title">${escapeHtml(activity.title)}</h1>`;
+
+            // Info grid
+            html += `
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="icon">📅</span>
+                    <div><div class="label">活动时间</div><div class="value">${dateStr}</div></div>
+                </div>
+                <div class="info-item">
+                    <span class="icon">🏢</span>
+                    <div><div class="label">主办单位</div><div class="value">${escapeHtml(activity.creatorName || '未知')}</div></div>
+                </div>
+                <div class="info-item">
+                    <span class="icon">📍</span>
+                    <div><div class="label">活动地点</div><div class="value">${escapeHtml(activity.location || '待定')}</div></div>
+                </div>
+                <div class="info-item">
+                    <span class="icon">👥</span>
+                    <div><div class="label">报名情况</div><div class="value">${activity.signedCount || 0}/${activity.totalQuota || 0} 人已报名</div></div>
+                </div>
+            </div>`;
+
+            html += `<hr style="border:none;border-top:1px solid var(--border);margin:20px 0">`;
+
+            // Description
+            html += `
+            <h2 class="section-title">活动介绍</h2>
+            <p style="color:var(--text-primary);line-height:1.8">${escapeHtml(activity.description || '暂无描述')}</p>`;
+
+            html += `<hr style="border:none;border-top:1px solid var(--border);margin:20px 0">`;
+
+            // Position list
+            html += `<h2 class="section-title">岗位列表</h2>`;
+            if (positions.length === 0) {
+                html += `<p style="color:var(--text-secondary)">暂无岗位信息</p>`;
+            } else {
+                html += positions.map(pos => {
+                    const isFull = pos.assignedCount >= pos.quota;
+                    const isMyPos = myRegistration && myRegistration.positionId === pos.id;
+                    // 解析 skill tags（从 description 中提取或用岗位名关联）
+                    const skillTags = pos.description ? extractTags(pos.description) : [];
+                    const canSelect = !myRegistration && activity.status === 1 && !isFull;
+
+                    let badgeHtml = '';
+                    if (isMyPos) badgeHtml = '<span class="badge badge-approved">已报名</span>';
+                    else if (isFull) badgeHtml = '<span class="badge" style="background:#f1f5f9;color:#64748b">已满</span>';
+
+                    return `
+                    <div class="position-card ${selectedPositionId === pos.id ? 'selected' : ''}" id="pos-${pos.id}">
+                        <div style="flex:1">
+                            <div class="pos-header">
+                                <span class="pos-name">${escapeHtml(pos.name)}</span>
+                                ${badgeHtml}
+                            </div>
+                            <div class="pos-desc">${escapeHtml(pos.description || '')}</div>
+                            ${skillTags.length > 0 ? `<div class="pos-tags">${skillTags.map(t => `<span class="pos-tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+                            <div class="pos-quota">名额：${pos.assignedCount || 0}/${pos.quota}</div>
+                        </div>
+                        ${canSelect ? `<button class="btn btn-outline btn-sm btn-select" onclick="selectPosition(${pos.id})">选择</button>` : ''}
+                    </div>`;
+                }).join('');
+            }
+
+            // Action area
+            html += renderActionArea();
+
+            app.innerHTML = html;
+        }
+
+        function renderActionArea() {
+            // 已报名
+            if (myRegistration) {
+                const regSt = registrationStatusInfo(myRegistration.status);
+                let html = `
+                <div class="action-box registered">
+                    <div class="action-title">✔ 您已报名此活动</div>
+                    <div class="action-info">报名岗位：${escapeHtml(myRegistration.positionName || '待分配')}</div>
+                    <div class="action-info">审核状态：${regSt.text}</div>
+                </div>`;
+                // 待审核或已通过可取消
+                if (myRegistration.status === 0 || myRegistration.status === 1) {
+                    html += `<button class="btn btn-danger btn-block" style="margin-top:16px" onclick="cancelRegistration()">取消报名</button>`;
+                }
+                return html;
+            }
+
+            // 活动不在报名中
+            if (activity.status !== 1) {
+                return `
+                <div class="action-box closed">
+                    <div style="display:flex;align-items:center;gap:8px;color:var(--text-secondary)">
+                        ⓘ 该活动当前不接受报名
+                    </div>
+                </div>`;
+            }
+
+            // 可报名
+            return `<button class="btn btn-primary btn-block" style="margin-top:24px;${selectedPositionId ? '' : 'opacity:0.5;cursor:not-allowed;background:#9ca3af'}" id="confirmBtn" onclick="submitRegistration()" ${selectedPositionId ? '' : 'disabled'}>确认报名</button>`;
+        }
+
+        function selectPosition(posId) {
+            selectedPositionId = selectedPositionId === posId ? null : posId;
+            render();
+        }
+
+        async function submitRegistration() {
+            if (!selectedPositionId) return;
+            try {
+                await post('/api/registrations', { activityId });
+                showToast('报名成功！', 'success');
+                await loadAll();
+            } catch (err) { /* api.js already shows toast */ }
+        }
+
+        async function cancelRegistration() {
+            if (!myRegistration) return;
+            const ok = await showConfirm('取消报名', '确定要取消报名吗？此操作不可撤销。');
+            if (!ok) return;
+            try {
+                await del(`/api/registrations/${myRegistration.id}`);
+                showToast('已取消报名', 'success');
+                myRegistration = null;
+                selectedPositionId = null;
+                await loadAll();
+            } catch (err) { /* api.js already shows toast */ }
+        }
+
+        // 从描述文本中简单提取可能的技能标签（逗号/顿号分隔的短语）
+        function extractTags(text) {
+            // 尝试提取括号或短语中的标签
+            const tags = [];
+            const patterns = text.match(/[\u4e00-\u9fa5a-zA-Z]{2,8}/g);
+            if (patterns && patterns.length <= 6) {
+                return patterns.slice(0, 4);
+            }
+            return [];
+        }
+
+        loadAll();
+    </script>
+</body>
+</html>

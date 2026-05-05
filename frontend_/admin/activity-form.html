@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活动编辑 - 志愿服务管理系统</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <style>
+        .page-title { font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+        .page-subtitle { font-size: 14px; color: var(--text-secondary); margin-bottom: 28px; }
+
+        .form-card {
+            background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+            padding: 28px; margin-bottom: 24px;
+        }
+        .form-card-title {
+            font-size: 16px; font-weight: 600; color: var(--text-primary);
+            margin-bottom: 20px; padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            display: inline-block;
+        }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .form-group label .required { color: var(--danger); }
+        .form-group .form-input {
+            width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+            border-radius: 8px; font-size: 14px; color: var(--text-primary);
+            outline: none; box-sizing: border-box; transition: border-color .15s;
+        }
+        .form-group .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.08); }
+        .form-group textarea.form-input { min-height: 90px; resize: vertical; }
+        .form-group select.form-input { cursor: pointer; }
+
+        /* 岗位区域 */
+        .positions-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px;
+        }
+        .positions-header .section-title {
+            font-size: 16px; font-weight: 600; color: var(--text-primary);
+        }
+
+        .position-card {
+            border: 1px solid var(--border); border-radius: var(--radius-md);
+            padding: 20px; margin-bottom: 16px; background: #fafbfc; position: relative;
+        }
+        .position-card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 14px;
+        }
+        .position-card-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
+        .btn-remove-position {
+            background: none; border: none; cursor: pointer;
+            color: var(--danger); font-size: 18px; padding: 2px 6px;
+            border-radius: 6px; transition: background .15s;
+        }
+        .btn-remove-position:hover { background: var(--danger-bg); }
+
+        .requirements-list { display: flex; flex-direction: column; gap: 8px; }
+        .requirement-row { display: flex; gap: 8px; align-items: center; }
+        .requirement-row input {
+            flex: 1; padding: 8px 12px; border: 1px solid var(--border);
+            border-radius: 6px; font-size: 13px; outline: none;
+            transition: border-color .15s;
+        }
+        .requirement-row input:focus { border-color: var(--primary); }
+        .btn-remove-req {
+            background: none; border: none; cursor: pointer; color: var(--danger);
+            font-size: 16px; padding: 4px 6px; border-radius: 4px;
+        }
+        .btn-add-req {
+            background: none; border: none; cursor: pointer;
+            color: var(--primary); font-size: 13px; padding: 4px 0;
+            font-weight: 500; text-decoration: none; display: inline-block; margin-top: 4px;
+        }
+        .btn-add-req:hover { text-decoration: underline; }
+
+        .form-actions {
+            display: flex; gap: 16px; margin-top: 8px;
+        }
+        .form-actions .btn { flex: 1; padding: 13px; font-size: 15px; }
+        .form-actions .btn-cancel { flex: none; width: 120px; }
+    </style>
+</head>
+<body>
+
+<div class="admin-body" style="max-width:1100px">
+    <div class="page-title" id="pageTitle">发布新活动</div>
+    <div class="page-subtitle">填写活动信息和岗位设置</div>
+
+        <!-- 基础信息 -->
+        <div class="form-card">
+            <div class="form-card-title">基础信息</div>
+
+            <div class="form-group">
+                <label><span class="required">* </span>活动名称</label>
+                <input class="form-input" type="text" id="title" placeholder="请输入活动名称">
+            </div>
+            <div class="form-group">
+                <label><span class="required">* </span>活动描述</label>
+                <textarea class="form-input" id="description" placeholder="请输入活动详细描述"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="required">* </span>活动类别</label>
+                    <select class="form-input" id="categoryTag">
+                        <option value="">请选择活动类别</option>
+                        <option value="环境保护">环境保护</option>
+                        <option value="敬老助残">敬老助残</option>
+                        <option value="教育辅导">教育辅导</option>
+                        <option value="医疗健康">医疗健康</option>
+                        <option value="文化宣传">文化宣传</option>
+                        <option value="应急救援">应急救援</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><span class="required">* </span>活动状态</label>
+                    <select class="form-input" id="status">
+                        <option value="0">草稿</option>
+                        <option value="1" selected>报名中</option>
+                        <option value="2">进行中</option>
+                        <option value="3">已结束</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="required">* </span>开始时间</label>
+                    <input class="form-input" type="date" id="startTime">
+                </div>
+                <div class="form-group">
+                    <label><span class="required">* </span>结束时间</label>
+                    <input class="form-input" type="date" id="endTime">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="required">* </span>活动地点</label>
+                    <input class="form-input" type="text" id="location" placeholder="请输入活动地点">
+                </div>
+                <div class="form-group">
+                    <label><span class="required">* </span>主办单位</label>
+                    <input class="form-input" type="text" id="organizer" placeholder="请输入主办单位">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><span class="required">* </span>总名额</label>
+                    <input class="form-input" type="number" id="totalQuota" min="1" placeholder="请输入总招募人数">
+                </div>
+                <div class="form-group">
+                    <label>封面图 URL（可选）</label>
+                    <input class="form-input" type="text" id="coverUrl" placeholder="https://...">
+                </div>
+            </div>
+        </div>
+
+        <!-- 岗位设置 -->
+        <div class="form-card">
+            <div class="positions-header">
+                <div class="section-title">岗位设置</div>
+                <button class="btn btn-outline" onclick="addPosition()" style="padding:6px 16px;font-size:13px">＋ 添加岗位</button>
+            </div>
+            <div id="positionsList"></div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="form-actions">
+            <button class="btn btn-primary" id="submitBtn" onclick="submitForm()">
+                <span id="submitLabel">🖫 发布活动</span>
+            </button>
+            <button class="btn btn-outline btn-cancel" onclick="location.href='activities.html'">取消</button>
+        </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+    requireAuth(1);
+    renderNavbar('admin');
+    renderSidebar('activities');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const activityId = urlParams.get('id') ? Number(urlParams.get('id')) : null;
+    const isEdit = !!activityId;
+
+    // 岗位数据（新建模式下本地管理）
+    let positions = []; // [{localId, name, description, requirements:[], quota, id?}]
+    let posCounter = 0;
+
+    if (isEdit) {
+        document.getElementById('pageTitle').textContent = '编辑活动';
+        document.getElementById('submitLabel').textContent = '🖫 保存修改';
+        loadActivity();
+    } else {
+        // 新建模式默认加一个空岗位
+        addPosition();
+    }
+
+    async function loadActivity() {
+        try {
+            const a = await get(`/api/activities/${activityId}`);
+            document.getElementById('title').value       = a.title || '';
+            document.getElementById('description').value = a.description || '';
+            document.getElementById('location').value    = a.location || '';
+            document.getElementById('organizer').value   = a.organizer || '';
+            document.getElementById('totalQuota').value  = a.totalQuota || '';
+            document.getElementById('coverUrl').value    = a.coverImage || '';
+            document.getElementById('status').value      = String(a.status ?? 1);
+            if (a.startTime) document.getElementById('startTime').value = a.startTime.slice(0, 10);
+            if (a.endTime)   document.getElementById('endTime').value   = a.endTime.slice(0, 10);
+
+            // 加载岗位
+            const posData = await get(`/api/activities/${activityId}/positions`);
+            (posData || []).forEach(p => {
+                addPosition({
+                    id:          p.id,
+                    name:        p.name,
+                    description: p.description,
+                    quota:       p.quota,
+                    requirements: p.requirements ? p.requirements.split('，') : [],
+                });
+            });
+        } catch (e) {
+            showToast('加载活动信息失败', 'error');
+        }
+    }
+
+    function addPosition(data = null) {
+        const lid = ++posCounter;
+        const pos = {
+            localId:      lid,
+            id:           data?.id || null,
+            name:         data?.name || '',
+            description:  data?.description || '',
+            quota:        data?.quota || 10,
+            requirements: data?.requirements?.length ? data.requirements : [''],
+        };
+        positions.push(pos);
+        renderPositions();
+    }
+
+    function removePosition(lid) {
+        positions = positions.filter(p => p.localId !== lid);
+        renderPositions();
+    }
+
+    function addRequirement(lid) {
+        const pos = positions.find(p => p.localId === lid);
+        if (pos) { pos.requirements.push(''); renderPositions(); }
+    }
+
+    function removeRequirement(lid, idx) {
+        const pos = positions.find(p => p.localId === lid);
+        if (pos && pos.requirements.length > 1) {
+            pos.requirements.splice(idx, 1);
+            renderPositions();
+        }
+    }
+
+    function syncPositionField(lid, field, value) {
+        const pos = positions.find(p => p.localId === lid);
+        if (pos) pos[field] = value;
+    }
+
+    function syncRequirement(lid, idx, value) {
+        const pos = positions.find(p => p.localId === lid);
+        if (pos) pos.requirements[idx] = value;
+    }
+
+    function renderPositions() {
+        const container = document.getElementById('positionsList');
+        if (positions.length === 0) {
+            container.innerHTML = `<p style="color:var(--text-secondary);font-size:14px;text-align:center;padding:20px 0">暂无岗位，点击「添加岗位」新增</p>`;
+            return;
+        }
+        container.innerHTML = positions.map((pos, i) => `
+            <div class="position-card">
+                <div class="position-card-header">
+                    <div class="position-card-title">岗位 ${i + 1}</div>
+                    ${positions.length > 1 ? `<button class="btn-remove-position" onclick="removePosition(${pos.localId})" title="删除岗位">🗑</button>` : ''}
+                </div>
+                <div class="form-group">
+                    <label><span class="required">* </span>岗位名称</label>
+                    <input class="form-input" type="text" value="${escapeHtml(pos.name)}" placeholder="例如：清洁组志愿者"
+                        oninput="syncPositionField(${pos.localId},'name',this.value)">
+                </div>
+                <div class="form-group">
+                    <label><span class="required">* </span>岗位描述</label>
+                    <textarea class="form-input" placeholder="请输入岗位职责和工作内容"
+                        oninput="syncPositionField(${pos.localId},'description',this.value)">${escapeHtml(pos.description)}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>岗位要求</label>
+                    <div class="requirements-list">
+                        ${pos.requirements.map((r, idx) => `
+                            <div class="requirement-row">
+                                <input type="text" value="${escapeHtml(r)}" placeholder="例如：身体健康"
+                                    oninput="syncRequirement(${pos.localId},${idx},this.value)">
+                                ${pos.requirements.length > 1
+                                    ? `<button class="btn-remove-req" onclick="removeRequirement(${pos.localId},${idx})">✕</button>`
+                                    : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="btn-add-req" onclick="addRequirement(${pos.localId})">＋ 添加要求</button>
+                </div>
+                <div class="form-group">
+                    <label><span class="required">* </span>招募人数</label>
+                    <input class="form-input" type="number" min="1" value="${pos.quota}"
+                        oninput="syncPositionField(${pos.localId},'quota',Number(this.value))">
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function submitForm() {
+        // 基础校验
+        const title       = document.getElementById('title').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const location    = document.getElementById('location').value.trim();
+        const organizer   = document.getElementById('organizer').value.trim();
+        const totalQuota  = Number(document.getElementById('totalQuota').value);
+        const startTime   = document.getElementById('startTime').value;
+        const endTime     = document.getElementById('endTime').value;
+        const status      = Number(document.getElementById('status').value);
+        const coverImage  = document.getElementById('coverUrl').value.trim();
+
+        if (!title)       { showToast('请填写活动名称', 'error'); return; }
+        if (!description) { showToast('请填写活动描述', 'error'); return; }
+        if (!location)    { showToast('请填写活动地点', 'error'); return; }
+        if (!organizer)   { showToast('请填写主办单位', 'error'); return; }
+        if (!totalQuota || totalQuota < 1) { showToast('请填写有效的总名额', 'error'); return; }
+        if (!startTime)   { showToast('请选择开始时间', 'error'); return; }
+        if (!endTime)     { showToast('请选择结束时间', 'error'); return; }
+
+        // 岗位校验
+        for (const pos of positions) {
+            if (!pos.name.trim())        { showToast('岗位名称不能为空', 'error'); return; }
+            if (!pos.description.trim()) { showToast('岗位描述不能为空', 'error'); return; }
+            if (!pos.quota || pos.quota < 1) { showToast('岗位招募人数不正确', 'error'); return; }
+        }
+
+        const activityData = {
+            title, description, location, organizer, totalQuota, status,
+            startTime: startTime + ' 00:00:00',
+            endTime:   endTime   + ' 23:59:59',
+        };
+        if (coverImage) activityData.coverImage = coverImage;
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+
+        try {
+            let savedId = activityId;
+
+            if (isEdit) {
+                await put(`/api/activities/${activityId}`, activityData);
+            } else {
+                const created = await post('/api/activities', activityData);
+                savedId = created?.id || created;
+            }
+
+            // 保存岗位（只对有名称的岗位提交）
+            if (savedId) {
+                for (const pos of positions) {
+                    const posBody = {
+                        name:         pos.name.trim(),
+                        description:  pos.description.trim(),
+                        quota:        pos.quota,
+                        requirements: pos.requirements.filter(r => r.trim()).join('，'),
+                    };
+                    if (pos.id) {
+                        // 编辑现有岗位
+                        await put(`/api/positions/${pos.id}`, posBody);
+                    } else {
+                        // 新增岗位
+                        await post(`/api/activities/${savedId}/positions`, posBody);
+                    }
+                }
+            }
+
+            showToast(isEdit ? '活动已保存' : '活动发布成功', 'success');
+            setTimeout(() => location.href = 'activities.html', 800);
+        } catch (e) {
+            btn.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>

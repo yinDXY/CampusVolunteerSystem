@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>签到管理 - 志愿服务管理系统</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <style>
+        .page-title { font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+        .page-subtitle { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+
+        /* 筛选栏 */
+        .filter-bar .filter-group { display: flex; flex-direction: column; gap: 6px; min-width: 200px; max-width: 420px; flex: 1; }
+        .filter-bar .filter-group label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+        .filter-select {
+            padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 14px; color: var(--text-primary); background: #fff; cursor: pointer;
+            outline: none; width: 100%; transition: border-color .15s;
+        }
+        .filter-select:focus { border-color: var(--primary); }
+
+        /* 空状态 */
+        .empty-state {
+            background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+            padding: 64px 24px; text-align: center;
+        }
+        .empty-state .hint { color: var(--text-muted); font-size: 15px; margin-bottom: 6px; }
+        .empty-state .sub-hint { color: var(--text-muted); font-size: 13px; }
+        .empty-state .sub-hint span { color: var(--primary); }
+
+        /* QR + 统计 两栏布局 */
+        .qr-stats-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;
+        }
+        @media (max-width: 900px) { .qr-stats-grid { grid-template-columns: 1fr; } }
+
+        /* QR 区域 */
+        .qr-card {
+            background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+            padding: 28px; text-align: center;
+        }
+        .qr-card h2 { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; }
+        .qr-img-wrap {
+            display: inline-block; padding: 24px;
+            background: linear-gradient(135deg, #eff6ff, #f5f3ff); border-radius: 12px; margin-bottom: 16px;
+        }
+        .qr-img-wrap img {
+            width: 240px; height: 240px; border-radius: 8px; border: 4px solid #e5e7eb;
+            display: block; background: #fff;
+        }
+        .qr-img-wrap .qr-placeholder {
+            width: 240px; height: 240px; border-radius: 8px; border: 4px solid #e5e7eb;
+            background: #fff; display: flex; align-items: center; justify-content: center;
+            color: var(--text-muted); font-size: 14px;
+        }
+        .qr-timer { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--text-secondary); font-size: 14px; margin-bottom: 4px; }
+        .qr-timer svg { color: var(--primary); }
+        .qr-hint { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+        .qr-token-box {
+            margin-top: 12px; padding: 10px 16px; background: #eff6ff; border-radius: 8px;
+            font-size: 12px; color: var(--text-secondary); word-break: break-all;
+        }
+
+        /* 实时统计 */
+        .stats-card {
+            background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 28px;
+        }
+        .stats-card h2 { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; }
+        .stat-circles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+        .stat-circle {
+            text-align: center; padding: 16px 8px; border-radius: 12px;
+        }
+        .stat-circle.green  { background: #f0fdf4; }
+        .stat-circle.blue   { background: #eff6ff; }
+        .stat-circle.red    { background: #fef2f2; }
+        .stat-circle .icon { margin-bottom: 6px; }
+        .stat-circle .icon svg { width: 28px; height: 28px; }
+        .stat-circle.green .icon svg { color: #16a34a; }
+        .stat-circle.blue .icon svg  { color: #2563eb; }
+        .stat-circle.red .icon svg   { color: #dc2626; }
+        .stat-circle .num { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+        .stat-circle .label { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+        .activity-info-box {
+            padding: 16px; background: #f8fafc; border-radius: 10px;
+        }
+        .activity-info-box .info-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+        .activity-info-box .info-line { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+        /* 签到明细表 */
+        .detail-card {
+            background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden;
+        }
+        .detail-card .card-header {
+            padding: 20px 24px; border-bottom: 1px solid var(--border);
+        }
+        .detail-card .card-header h2 { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
+        .checkin-table { width: 100%; border-collapse: collapse; }
+        .checkin-table th {
+            background: #f8fafc; padding: 13px 18px; text-align: left;
+            font-size: 13px; font-weight: 600; color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        .checkin-table td {
+            padding: 13px 18px; font-size: 14px; color: var(--text-primary);
+            border-bottom: 1px solid #f1f5f9; vertical-align: middle;
+        }
+        .checkin-table tr:last-child td { border-bottom: none; }
+        .checkin-table tr:hover td { background: #f8fafc; }
+
+        /* 状态徽章 */
+        .status-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; }
+        .status-badge svg { width: 16px; height: 16px; }
+        .status-checkin  { color: #2563eb; }
+        .status-checkout { color: #16a34a; }
+        .status-absent   { color: #dc2626; }
+        .status-late     { color: #f59e0b; }
+
+        .table-empty { text-align: center; padding: 48px 24px; color: var(--text-muted); font-size: 14px; }
+    </style>
+</head>
+<body>
+<div id="navbar"></div>
+<div id="sidebar"></div>
+
+<div class="admin-body">
+    <h1 class="page-title">签到管理</h1>
+    <p class="page-subtitle">管理活动签到签退，实时查看参与情况</p>
+
+    <!-- 活动选择 -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label>选择活动 *</label>
+            <select id="activitySelect" class="filter-select" onchange="onActivityChange()">
+                <option value="">请选择活动</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 空状态（未选择活动） -->
+    <div id="emptyState" class="empty-state">
+        <div class="hint">请先选择活动</div>
+        <div class="sub-hint">选择活动后可查看签到情况</div>
+    </div>
+
+    <!-- 活动非进行中状态 -->
+    <div id="notOngoingState" class="empty-state" style="display:none;">
+        <div class="hint">该活动尚未开始</div>
+        <div class="sub-hint">只有<span>进行中</span>的活动才能生成签到二维码</div>
+    </div>
+
+    <!-- QR码 + 实时统计 -->
+    <div id="qrStatsArea" class="qr-stats-grid" style="display:none;">
+        <!-- 左: 签到二维码 -->
+        <div class="qr-card">
+            <h2>签到二维码</h2>
+            <div class="qr-img-wrap">
+                <img id="qrImage" src="" alt="签到二维码" style="display:none;">
+                <div id="qrPlaceholder" class="qr-placeholder">正在加载...</div>
+            </div>
+            <div class="qr-timer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                二维码将在 <strong id="countdownNum">60</strong> 秒后刷新
+            </div>
+            <div class="qr-hint">志愿者使用手机扫码进行签到/签退</div>
+            <div class="qr-token-box" id="qrTokenDisplay"></div>
+        </div>
+
+        <!-- 右: 实时统计 -->
+        <div class="stats-card">
+            <h2>实时统计</h2>
+            <div class="stat-circles">
+                <div class="stat-circle green">
+                    <div class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <div class="num" id="checkinCount">0</div>
+                    <div class="label">已签到</div>
+                </div>
+                <div class="stat-circle blue">
+                    <div class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    </div>
+                    <div class="num" id="checkoutCount">0</div>
+                    <div class="label">已签退</div>
+                </div>
+                <div class="stat-circle red">
+                    <div class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    </div>
+                    <div class="num" id="absentCount">0</div>
+                    <div class="label">缺席</div>
+                </div>
+            </div>
+            <div class="activity-info-box">
+                <div class="info-title">活动信息</div>
+                <div class="info-line">活动名称：<span id="infoName">-</span></div>
+                <div class="info-line">活动地点：<span id="infoLocation">-</span></div>
+                <div class="info-line">活动时间：<span id="infoTime">-</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 签到明细 -->
+    <div id="detailArea" class="detail-card" style="display:none;">
+        <div class="card-header"><h2>签到明细</h2></div>
+        <div class="overflow-x-auto">
+            <table class="checkin-table">
+                <thead>
+                    <tr>
+                        <th>志愿者</th>
+                        <th>签到时间</th>
+                        <th>签退时间</th>
+                        <th>服务时长</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody id="checkinBody"></tbody>
+            </table>
+        </div>
+        <div id="tableEmpty" class="table-empty" style="display:none;">暂无签到记录</div>
+    </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+    requireAuth(1);
+    renderNavbar('admin');
+    renderSidebar('checkin');
+
+    /* =========== 全局状态 =========== */
+    let activities = [];
+    let currentActivity = null;
+    let countdownTimer = null;
+    let refreshTimer = null;
+    let countdown = 60;
+
+    const STATUS_MAP = { 0: '草稿', 1: '报名中', 2: '进行中', 3: '已结束', 4: '已取消' };
+
+    /* =========== 初始化 =========== */
+    (async () => {
+        try {
+            // 加载所有活动（不分页，拿全量）
+            const res = await get('/api/activities?pageSize=200');
+            activities = res?.list || res || [];
+            const sel = document.getElementById('activitySelect');
+            activities.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.id;
+                const statusLabel = STATUS_MAP[a.status] || '';
+                opt.textContent = `${a.title} - ${statusLabel}`;
+                sel.appendChild(opt);
+            });
+        } catch (e) {
+            showToast('加载活动列表失败', 'error');
+        }
+    })();
+
+    /* =========== 活动切换 =========== */
+    function onActivityChange() {
+        const id = document.getElementById('activitySelect').value;
+        // 清除之前的定时器
+        clearTimers();
+
+        if (!id) {
+            showSection('empty');
+            return;
+        }
+
+        currentActivity = activities.find(a => String(a.id) === id);
+        if (!currentActivity) { showSection('empty'); return; }
+
+        if (currentActivity.status === 2) {
+            // 进行中 → 显示二维码 + 签到明细
+            showSection('ongoing');
+            fillActivityInfo();
+            loadQRCode();
+            loadCheckinList();
+            startCountdown();
+        } else {
+            // 非进行中 → 提示 + 签到明细
+            showSection('notOngoing');
+            loadCheckinList();
+        }
+    }
+
+    /* =========== 界面切换 =========== */
+    function showSection(mode) {
+        document.getElementById('emptyState').style.display      = mode === 'empty' ? '' : 'none';
+        document.getElementById('notOngoingState').style.display  = mode === 'notOngoing' ? '' : 'none';
+        document.getElementById('qrStatsArea').style.display      = mode === 'ongoing' ? '' : 'none';
+        document.getElementById('detailArea').style.display        = (mode === 'ongoing' || mode === 'notOngoing') ? '' : 'none';
+    }
+
+    /* =========== 活动信息填充 =========== */
+    function fillActivityInfo() {
+        if (!currentActivity) return;
+        document.getElementById('infoName').textContent = currentActivity.title || '-';
+        document.getElementById('infoLocation').textContent = currentActivity.location || '-';
+        const start = currentActivity.startTime ? formatDate(currentActivity.startTime) : '';
+        const end   = currentActivity.endTime   ? formatDate(currentActivity.endTime)   : '';
+        document.getElementById('infoTime').textContent = start && end ? `${start} - ${end}` : '-';
+    }
+
+    /* =========== 二维码加载 =========== */
+    async function loadQRCode() {
+        if (!currentActivity) return;
+        try {
+            const data = await get(`/api/checkin/qrcode/${currentActivity.id}`);
+            if (data && data.qrCodeBase64) {
+                const img = document.getElementById('qrImage');
+                img.src = data.qrCodeBase64;
+                img.style.display = '';
+                document.getElementById('qrPlaceholder').style.display = 'none';
+                // 展示token信息
+                try {
+                    document.getElementById('qrTokenDisplay').textContent =
+                        `CHECKIN_${currentActivity.id}_${Date.now()}`;
+                } catch(_) {}
+            }
+        } catch (e) {
+            document.getElementById('qrPlaceholder').textContent = '二维码加载失败';
+            document.getElementById('qrPlaceholder').style.display = '';
+            document.getElementById('qrImage').style.display = 'none';
+        }
+    }
+
+    /* =========== 倒计时 =========== */
+    function startCountdown() {
+        countdown = 60;
+        updateCountdownUI();
+        countdownTimer = setInterval(() => {
+            countdown--;
+            if (countdown <= 0) {
+                countdown = 60;
+                loadQRCode();       // 刷新二维码
+                loadCheckinList();  // 同时刷新列表
+            }
+            updateCountdownUI();
+        }, 1000);
+    }
+
+    function updateCountdownUI() {
+        document.getElementById('countdownNum').textContent = countdown;
+    }
+
+    function clearTimers() {
+        if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+        if (refreshTimer)   { clearInterval(refreshTimer);   refreshTimer = null; }
+    }
+
+    /* =========== 签到列表 =========== */
+    async function loadCheckinList() {
+        if (!currentActivity) return;
+        try {
+            const list = await get(`/api/checkin/activity/${currentActivity.id}`) || [];
+            renderCheckinTable(list);
+            updateStats(list);
+        } catch (e) {
+            document.getElementById('checkinBody').innerHTML = '';
+            document.getElementById('tableEmpty').style.display = '';
+        }
+    }
+
+    function renderCheckinTable(list) {
+        const tbody = document.getElementById('checkinBody');
+        const empty = document.getElementById('tableEmpty');
+
+        if (!list.length) {
+            tbody.innerHTML = '';
+            empty.style.display = '';
+            return;
+        }
+        empty.style.display = 'none';
+
+        tbody.innerHTML = list.map(r => {
+            const name = escapeHtml(r.realName || r.username || '-');
+            const cin  = r.checkinTime  ? formatTime(r.checkinTime) : '-';
+            const cout = r.checkoutTime ? formatTime(r.checkoutTime) : '-';
+            const dur  = r.durationHours != null ? `${r.durationHours} 小时` : '-';
+
+            let statusHtml = '';
+            if (r.checkoutTime) {
+                statusHtml = `<span class="status-badge status-checkout">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    已签退</span>`;
+            } else if (r.checkinTime) {
+                statusHtml = `<span class="status-badge status-checkin">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    已签到</span>`;
+            } else {
+                statusHtml = `<span class="status-badge status-absent">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    缺席</span>`;
+            }
+
+            return `<tr>
+                <td style="font-weight:600">${name}</td>
+                <td>${cin}</td>
+                <td>${cout}</td>
+                <td>${dur}</td>
+                <td>${statusHtml}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function updateStats(list) {
+        let checkinN = 0, checkoutN = 0, absentN = 0;
+        list.forEach(r => {
+            if (r.checkoutTime)     checkoutN++;
+            else if (r.checkinTime) checkinN++;
+            else                    absentN++;
+        });
+        document.getElementById('checkinCount').textContent  = checkinN;
+        document.getElementById('checkoutCount').textContent = checkoutN;
+        document.getElementById('absentCount').textContent   = absentN;
+    }
+
+    /* =========== 页面卸载清理 =========== */
+    window.addEventListener('beforeunload', clearTimers);
+</script>
+</body>
+</html>

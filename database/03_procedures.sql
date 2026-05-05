@@ -25,7 +25,7 @@ CREATE PROCEDURE proc_settle_activity(
     OUT p_result_code INT,
     OUT p_result_msg  VARCHAR(200)
 )
-BEGIN
+proc_settle_activity: BEGIN
     DECLARE v_status   TINYINT;
     DECLARE v_end_time DATETIME;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -162,7 +162,7 @@ CREATE PROCEDURE proc_apply_activity(
     OUT p_result_code INT,
     OUT p_result_msg  VARCHAR(200)
 )
-BEGIN
+proc_apply_activity: BEGIN
     DECLARE v_status      TINYINT;
     DECLARE v_quota       INT;
     DECLARE v_signed      INT;

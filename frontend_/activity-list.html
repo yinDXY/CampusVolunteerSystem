@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活动大厅 - 志愿服务管理系统</title>
+    <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+    <div class="page-header">
+        <h1>活动大厅</h1>
+        <p>探索志愿服务机会，用行动传递温暖</p>
+    </div>
+
+    <div class="search-bar" style="max-width:1200px;margin:0 auto 16px;">
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+            <div style="flex:1;min-width:240px;position:relative;">
+                <input class="form-input" type="text" id="keyword" placeholder="🔍 搜索活动名称、类别..." style="padding-left:12px">
+            </div>
+            <select class="form-input" id="statusFilter" style="width:160px;">
+                <option value="">🔻 全部状态</option>
+                <option value="1">报名中</option>
+                <option value="2">进行中</option>
+                <option value="3">已结束</option>
+                <option value="0">草稿</option>
+                <option value="4">已取消</option>
+            </select>
+        </div>
+        <p style="margin-top:12px;color:var(--primary);font-size:14px" id="totalHint">找到 0 个活动</p>
+    </div>
+
+    <div class="activity-grid" id="activityGrid" style="max-width:1200px;margin:0 auto;"></div>
+    <div class="pagination" id="pagination" style="max-width:1200px;margin:24px auto;"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        requireAuth();
+        renderNavbar('activities');
+
+        let pageNum = 1;
+        const pageSize = 9;
+
+        // 搜索/筛选事件
+        document.getElementById('keyword').addEventListener('input', debounce(() => { pageNum = 1; loadActivities(); }, 400));
+        document.getElementById('statusFilter').addEventListener('change', () => { pageNum = 1; loadActivities(); });
+
+        async function loadActivities() {
+            const keyword = document.getElementById('keyword').value.trim();
+            const status = document.getElementById('statusFilter').value;
+            const params = { pageNum, pageSize };
+            if (keyword) params.keyword = keyword;
+            if (status !== '') params.status = Number(status);
+
+            try {
+                const data = await get('/api/activities', params);
+                document.getElementById('totalHint').textContent = `找到 ${data.total} 个活动`;
+                renderGrid(data.list || []);
+                renderPagination(document.getElementById('pagination'), data.total, pageNum, pageSize, (p) => {
+                    pageNum = p;
+                    loadActivities();
+                });
+            } catch (err) {
+                document.getElementById('activityGrid').innerHTML = '<p style="text-align:center;color:var(--text-secondary)">加载失败，请稍后重试</p>';
+            }
+        }
+
+        // 渐变色组
+        const GRADIENTS = [
+            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+            'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+        ];
+
+        // 活动分类标签映射
+        function getCategoryTag(title, desc) {
+            const text = title + (desc || '');
+            if (/环境|清洁|环保|植树/.test(text)) return '环境保护';
+            if (/敬老|老人|助残|陪伴|孤寡/.test(text)) return '敬老助残';
+            if (/教育|辅导|图书|阅读|课业|支教/.test(text)) return '教育辅导';
+            if (/医疗|救护|健康|义诊/.test(text)) return '医疗救护';
+            if (/文化|宣传|演出|艺术/.test(text)) return '文化宣传';
+            if (/应急|救援|防灾|交通/.test(text)) return '应急救援';
+            return '志愿服务';
+        }
+
+        function renderGrid(list) {
+            const grid = document.getElementById('activityGrid');
+            if (list.length === 0) {
+                grid.innerHTML = '<p style="text-align:center;color:var(--text-secondary);grid-column:1/-1;padding:60px 0">暂无活动</p>';
+                return;
+            }
+            grid.innerHTML = list.map((a, i) => {
+                const st = activityStatusInfo(a.status);
+                const tag = getCategoryTag(a.title, a.description);
+                const grad = GRADIENTS[i % GRADIENTS.length];
+                const dateStr = formatDate(a.startTime) + (a.endTime ? ' - ' + formatDate(a.endTime) : '');
+                return `
+                <div class="activity-card" onclick="location.href='activity-detail.html?id=${a.id}'">
+                    <div class="cover" style="background:${grad};">
+                        <span class="badge ${st.cls}" style="position:absolute;top:12px;right:12px;">${escapeHtml(st.text)}</span>
+                        <span style="position:absolute;bottom:12px;left:12px;background:rgba(255,255,255,0.85);padding:3px 10px;border-radius:4px;font-size:12px;color:#333">${escapeHtml(tag)}</span>
+                    </div>
+                    <div class="body">
+                        <h3>${escapeHtml(a.title)}</h3>
+                        <p class="desc">${escapeHtml(a.description || '')}</p>
+                        <div class="meta">
+                            <span>📅 ${dateStr}</span>
+                            <span>📍 ${escapeHtml(a.location || '待定')}</span>
+                            <span>👥 ${a.signedCount || 0}/${a.totalQuota || 0} 人已报名</span>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <span style="color:var(--text-secondary);font-size:13px">${escapeHtml(a.creatorName || '')}</span>
+                        <a href="activity-detail.html?id=${a.id}" style="font-size:13px">查看详情 →</a>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // 防抖
+        function debounce(fn, ms) {
+            let t;
+            return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+        }
+
+        // 初始加载
+        loadActivities();
+    </script>
+</body>
+</html>
