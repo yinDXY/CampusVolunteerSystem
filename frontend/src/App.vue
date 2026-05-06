@@ -1,7 +1,10 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+import ToastHost from './components/ToastHost.vue'
+import ConfirmDialog from './components/ConfirmDialog.vue'
 </script>
 
 <template>
-  <HelloWorld />
+  <router-view />
+  <ToastHost />
+  <ConfirmDialog />
 </template>
