@@ -109,7 +109,7 @@ async function confirmScore() {
   }
   try {
     await patch(`/api/registrations/${scoreTargetId.value}/score`, {
-      score: selectedScore.value * 20,
+      score: selectedScore.value,
     })
     showToast('评分成功', 'success')
     closeScoreModal()
@@ -196,7 +196,7 @@ onMounted(async () => {
           <td>
             <span v-if="r.score == null" style="color: var(--text-secondary); font-size: 13px">未评分</span>
             <div v-else class="score-display">
-              <span class="score-stars">{{ '★'.repeat(Math.round(r.score / 20)) }}{{ '☆'.repeat(5 - Math.round(r.score / 20)) }}</span>
+              <span class="score-stars">{{ '★'.repeat(r.score) }}{{ '☆'.repeat(5 - r.score) }}</span>
               <span class="score-num">{{ r.score }}</span>
             </div>
           </td>
