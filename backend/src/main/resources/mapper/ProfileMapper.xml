@@ -38,4 +38,21 @@
         WHERE vp.user_id = #{userId}
     </select>
 
+    <!-- ====== user_tag 操作 ====== -->
+    <insert id="insertTagIfNotExists">
+        INSERT IGNORE INTO tag (name, category) VALUES (#{name}, #{category})
+    </insert>
+
+    <select id="findTagIdByNameAndCategory" resultType="java.lang.Long">
+        SELECT id FROM tag WHERE name = #{name} AND category = #{category} LIMIT 1
+    </select>
+
+    <insert id="insertUserTag">
+        INSERT IGNORE INTO user_tag (user_id, tag_id) VALUES (#{userId}, #{tagId})
+    </insert>
+
+    <delete id="deleteUserTagsByUserId">
+        DELETE FROM user_tag WHERE user_id = #{userId}
+    </delete>
+
 </mapper>

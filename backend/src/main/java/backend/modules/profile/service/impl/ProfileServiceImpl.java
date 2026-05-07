@@ -13,8 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -77,5 +79,32 @@ public class ProfileServiceImpl implements ProfileService {
         }
 
         return profile;
+    }
+
+    @Override
+    @Transactional
+    public void updateMyTags(List<String> tags) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        profileMapper.deleteUserTagsByUserId(userId);
+        saveUserTags(userId, tags);
+    }
+
+    @Override
+    @Transactional
+    public void saveUserTagsOnRegister(Long userId, List<String> tags) {
+        saveUserTags(userId, tags);
+    }
+
+    private void saveUserTags(Long userId, List<String> tags) {
+        if (tags == null || tags.isEmpty()) return;
+        for (String name : tags) {
+            String trimmed = name.trim();
+            if (trimmed.isEmpty()) continue;
+            profileMapper.insertTagIfNotExists(trimmed, "SKILL");
+            Long tagId = profileMapper.findTagIdByNameAndCategory(trimmed, "SKILL");
+            if (tagId != null) {
+                profileMapper.insertUserTag(userId, tagId);
+            }
+        }
     }
 }

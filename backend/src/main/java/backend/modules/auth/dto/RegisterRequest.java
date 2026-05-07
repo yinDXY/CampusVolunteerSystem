@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class RegisterRequest {
 
@@ -21,4 +23,7 @@ public class RegisterRequest {
     private String studentId;
     private String phone;
     private String email;
+
+    /** 注册时选择的擅长领域标签（可为空） */
+    private List<String> tags;
 }

@@ -6,6 +6,7 @@ import backend.modules.auth.dto.LoginRequest;
 import backend.modules.auth.dto.LoginVO;
 import backend.modules.auth.dto.RegisterRequest;
 import backend.modules.auth.service.AuthService;
+import backend.modules.profile.service.ProfileService;
 import backend.modules.user.entity.SysUser;
 import backend.modules.user.mapper.SysUserMapper;
 import backend.security.JwtUtil;
@@ -21,6 +22,7 @@ public class AuthServiceImpl implements AuthService {
     private final SysUserMapper sysUserMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final ProfileService profileService;
 
     @Override
     @Transactional
@@ -38,6 +40,10 @@ public class AuthServiceImpl implements AuthService {
                 .role(0)   // 默认注册为志愿者
                 .build();
         sysUserMapper.insert(user);
+        // 保存注册时选择的擅长领域标签
+        if (request.getTags() != null && !request.getTags().isEmpty()) {
+            profileService.saveUserTagsOnRegister(user.getId(), request.getTags());
+        }
     }
 
     @Override

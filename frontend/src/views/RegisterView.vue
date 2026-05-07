@@ -86,6 +86,7 @@ async function handleRegister() {
     if (email) body.email = email
     if (phone) body.phone = phone
     if (studentId) body.studentId = studentId
+    if (selectedTags.value.size > 0) body.tags = [...selectedTags.value]
     await post('/api/auth/register', body)
     showToast('注册成功，请登录', 'success')
     setTimeout(() => router.replace('/login'), 1000)

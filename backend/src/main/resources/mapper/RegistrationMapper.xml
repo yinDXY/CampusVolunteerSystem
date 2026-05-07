@@ -23,12 +23,13 @@
         LIMIT 1
     </select>
 
-    <!-- 志愿者查询自己的报名列表，JOIN activity/position 获取名称 -->
+    <!-- 志愿者查询自己的报名列表，JOIN activity/position/checkin 获取名称和时长 -->
     <select id="selectPageByUser" resultType="backend.modules.registration.dto.RegistrationVO">
         SELECT
             r.id,
             r.activity_id,
             a.title          AS activity_title,
+            a.status         AS activity_status,
             r.user_id,
             u.username,
             u.real_name,
@@ -37,11 +38,13 @@
             r.status,
             r.remark,
             r.score,
+            c.duration_hours,
             r.created_at
         FROM registration r
         LEFT JOIN activity   a ON a.id = r.activity_id AND a.deleted = 0
         LEFT JOIN sys_user   u ON u.id = r.user_id     AND u.deleted = 0
         LEFT JOIN `position` p ON p.id = r.position_id AND p.deleted = 0
+        LEFT JOIN checkin    c ON c.registration_id = r.id
         WHERE r.user_id = #{userId}
         <if test="query.status != null">
             AND r.status = #{query.status}

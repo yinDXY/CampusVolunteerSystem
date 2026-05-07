@@ -3,9 +3,12 @@ package backend.modules.profile.controller;
 import backend.common.result.R;
 import backend.modules.profile.dto.ProfileVO;
 import backend.modules.profile.service.ProfileService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/profile")
@@ -34,5 +37,18 @@ public class ChartController {
     @PreAuthorize("hasAnyRole('ACTIVITY_ADMIN', 'SUPER_ADMIN')")
     public R<ProfileVO> getRadar(@PathVariable Long userId) {
         return R.ok(profileService.getProfile(userId));
+    }
+
+    /**
+     * 更新当前志愿者的技能标签（全量替换）
+     * PUT /api/profile/tags
+     * 权限：志愿者（已登录）
+     * Body: ["摄影", "急救知识"]
+     */
+    @PutMapping("/tags")
+    @PreAuthorize("isAuthenticated()")
+    public R<Void> updateTags(@RequestBody List<String> tags) {
+        profileService.updateMyTags(tags);
+        return R.ok();
     }
 }
