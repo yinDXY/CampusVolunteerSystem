@@ -42,6 +42,7 @@ public class ActivityServiceImpl implements ActivityService {
                 .description(dto.getDescription())
                 .coverUrl(dto.getCoverUrl())
                 .location(dto.getLocation())
+                .organizer(dto.getOrganizer())
                 .startTime(dto.getStartTime())
                 .endTime(dto.getEndTime())
                 .signStartTime(dto.getSignStartTime())
@@ -65,6 +66,7 @@ public class ActivityServiceImpl implements ActivityService {
         existing.setDescription(dto.getDescription());
         existing.setCoverUrl(dto.getCoverUrl());
         existing.setLocation(dto.getLocation());
+        existing.setOrganizer(dto.getOrganizer());
         existing.setStartTime(dto.getStartTime());
         existing.setEndTime(dto.getEndTime());
         existing.setSignStartTime(dto.getSignStartTime());

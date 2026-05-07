@@ -1,0 +1,193 @@
+/* ============================================================
+   admin.css — 管理员双栏布局（固定侧边栏 + 内容区域）
+   ============================================================ */
+
+/* ---------- 侧边栏 ---------- */
+.sidebar {
+    position: fixed;
+    top: var(--navbar-h);
+    left: 0;
+    bottom: 0;
+    width: 200px;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    overflow-y: auto;
+    z-index: 900;
+}
+.sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
+.sidebar-nav a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px;
+    font-size: 14px; color: var(--text-secondary);
+    transition: .15s;
+    border-left: 3px solid transparent;
+    text-decoration: none;
+}
+.sidebar-nav a:hover {
+    color: var(--primary);
+    background: var(--primary-light);
+    text-decoration: none;
+}
+.sidebar-nav a.active {
+    color: var(--primary);
+    background: var(--primary-light);
+    border-left-color: var(--primary);
+    font-weight: 600;
+}
+.sidebar-nav a .icon {
+    width: 20px; height: 20px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 16px;
+}
+
+/* ---------- 内容区域 ---------- */
+.admin-body {
+    margin-left: 200px;
+    padding: calc(var(--navbar-h) + 28px) 32px 40px;
+    min-height: 100vh;
+}
+
+/* ---------- 筛选工具栏 ---------- */
+.filter-bar {
+    display: flex; gap: 16px; align-items: flex-end;
+    flex-wrap: wrap;
+    padding: 20px 24px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 20px;
+}
+.filter-bar .form-group { margin-bottom: 0; min-width: 200px; }
+.filter-bar .result-count {
+    font-size: 13px; color: var(--text-muted);
+    margin-left: auto; align-self: center;
+}
+
+/* ---------- 操作栏（标题 + 按钮） ---------- */
+.admin-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+/* ---------- 候选人卡片（派岗页） ---------- */
+.candidate-card {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+    transition: .15s;
+}
+.candidate-card:hover { border-color: var(--primary); }
+.candidate-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff; font-size: 18px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.candidate-info { flex: 1; }
+.candidate-info .name { font-weight: 600; font-size: 14px; }
+.candidate-info .detail { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.candidate-stats {
+    display: flex; gap: 24px;
+    font-size: 12px; color: var(--text-secondary);
+    margin-top: 8px;
+}
+.candidate-stats .label { color: var(--text-muted); }
+.match-bar {
+    display: flex; align-items: center; gap: 8px;
+}
+.match-bar .bar {
+    width: 120px; height: 6px;
+    background: var(--border); border-radius: 3px; overflow: hidden;
+}
+.match-bar .bar .fill {
+    height: 100%; background: var(--primary); border-radius: 3px;
+}
+.match-bar .percent { font-size: 12px; color: var(--text-secondary); }
+.skill-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 4px;
+    font-size: 11px; font-weight: 500;
+    margin-right: 4px;
+}
+
+/* ---------- 岗位信息卡片 ---------- */
+.position-info {
+    background: var(--primary-light);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+.position-info .label { color: var(--text-muted); }
+.position-info .remaining { color: var(--success); font-weight: 700; }
+
+/* ---------- 二维码展示 ---------- */
+.qr-section {
+    text-align: center;
+    padding: 32px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+.qr-section img {
+    margin: 0 auto 12px;
+    width: 240px; height: 240px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+.qr-countdown { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+
+/* ---------- 统计网格 ---------- */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+.stats-grid .full-width { grid-column: 1 / -1; }
+.chart-container {
+    width: 100%; min-height: 320px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 20px;
+}
+
+/* ---------- 排行榜 ---------- */
+.leaderboard-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+.leaderboard-item:last-child { border-bottom: none; }
+.leaderboard-rank {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    background: var(--bg-page); color: var(--text-secondary);
+}
+.leaderboard-item:nth-child(1) .leaderboard-rank { background: #fef9c3; color: #b45309; }
+.leaderboard-item:nth-child(2) .leaderboard-rank { background: #f1f5f9; color: #475569; }
+.leaderboard-item:nth-child(3) .leaderboard-rank { background: #ffedd5; color: #c2410c; }
+.leaderboard-info { flex: 1; }
+.leaderboard-info .name { font-weight: 600; font-size: 13px; }
+.leaderboard-info .sub  { font-size: 11px; color: var(--text-muted); }
+.leaderboard-hours { font-weight: 700; color: var(--primary); font-size: 14px; }
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 768px) {
+    .sidebar { display: none; }
+    .admin-body { margin-left: 0; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .filter-bar { flex-direction: column; align-items: stretch; }
+    .candidate-card { flex-direction: column; align-items: flex-start; }
+}

@@ -1,5 +1,24 @@
+"""
+校园志愿服务管理系统 - 志愿者个人画像雷达图
+Flask 微服务适配版（基于 UAV雷达图.py 改造）
+
+五维画像来源：v_volunteer_profile 视图
+  - 累计时长   total_hours       (0 ~ 100 h)
+  - 活动次数   activity_count    (0 ~ 20 场)
+  - 类型多样性 type_diversity    (0 ~ 10 种)
+  - 平均评分   avg_score         (0 ~ 5 分)
+  - 准时率     punctuality_rate  (0 ~ 100 %)
+
+Flask 调用方式：
+  result = generate_radar_chart(profile_dict, to_base64=True)
+  # 返回 PNG 的 base64 字符串，前端用 <img src="data:image/png;base64,..."> 渲染
+
+本地调试：
+  直接运行此文件，使用 SAMPLE_PROFILE 测试数据，弹出窗口预览并保存 PNG
+"""
+
 import matplotlib
-matplotlib.use('Agg')   
+matplotlib.use('Agg')   # 无头模式 ── 必须在 import pyplot 之前
 
 import base64
 import io
@@ -24,10 +43,10 @@ plt.rcParams['axes.unicode_minus'] = False      # 修复负号乱码
 # ============================================================
 CATEGORIES = ['累计时长(h)', '活动次数', '类型多样性', '平均评分', '准时率(%)']
 
-# 各维度归一化参考范围
+# 各维度归一化参考范围（可按实际数据调整上限）
 AXIS_VALUE_RANGES = {
     '累计时长(h)':  (0, 100),   # 超过 100h 按满分处理
-    '活动次数':     (0, 20),    # 超过 20 场按满分处理
+    '活动次数':     (0, 15),    # 超过 20 场按满分处理
     '类型多样性':   (0, 10),    # 超过 10 种按满分处理
     '平均评分':     (0, 5),     # 满分 5 分
     '准时率(%)':   (0, 100),   # 0 ~ 100%
@@ -153,10 +172,12 @@ def _normalize(raw_values: list) -> list:
     return result
 
 
+from typing import Optional
+
 # ============================================================
 # 主绘图函数（Flask 调用入口）
 # ============================================================
-def generate_radar_chart(profile: dict, to_base64: bool = True) -> str | None:
+def generate_radar_chart(profile: dict, to_base64: bool = True) -> Optional[str]:
     """
     生成志愿者画像雷达图。
 

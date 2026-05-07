@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>报名审核 - 志愿服务管理系统</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <style>
+        .page-title { font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+        .page-subtitle { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+
+        /* 筛选栏 */
+        .filter-bar {
+            background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+            padding: 20px 24px; margin-bottom: 20px;
+            display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end;
+        }
+        .filter-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 200px; }
+        .filter-group label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+        .filter-select {
+            padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 14px; color: var(--text-primary); background: #fff; cursor: pointer;
+            outline: none; width: 100%; transition: border-color .15s;
+        }
+        .filter-select:focus { border-color: var(--primary); }
+        .total-hint { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
+
+        /* 表格 */
+        .reg-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm); }
+        .reg-table th {
+            background: #f8fafc; padding: 13px 18px; text-align: left;
+            font-size: 13px; font-weight: 600; color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        .reg-table td {
+            padding: 13px 18px; font-size: 14px; color: var(--text-primary);
+            border-bottom: 1px solid #f1f5f9; vertical-align: middle;
+        }
+        .reg-table tr:last-child td { border-bottom: none; }
+        .reg-table tr:hover td { background: #f8fafc; }
+
+        .volunteer-cell .vol-name { font-weight: 600; }
+        .volunteer-cell .vol-id   { font-size: 12px; color: var(--text-secondary); }
+
+        /* 操作按钮 */
+        .ops-btns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .btn-approve {
+            background: var(--success); color: #fff; border: none; padding: 6px 14px;
+            border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 500;
+            transition: background .15s;
+        }
+        .btn-approve:hover { background: #15803d; }
+        .btn-reject {
+            background: var(--danger); color: #fff; border: none; padding: 6px 14px;
+            border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 500;
+            transition: background .15s;
+        }
+        .btn-reject:hover { background: #b91c1c; }
+
+        /* 评分 */
+        .score-display { display: flex; align-items: center; gap: 4px; }
+        .score-stars { color: #f59e0b; font-size: 15px; }
+        .score-num { font-size: 13px; color: var(--text-secondary); }
+
+        .btn-score {
+            background: none; border: 1px solid var(--primary); color: var(--primary);
+            padding: 5px 12px; border-radius: 6px; font-size: 13px; cursor: pointer;
+            transition: all .15s;
+        }
+        .btn-score:hover { background: var(--primary); color: #fff; }
+
+        /* 评分弹窗 */
+        .score-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,.45);
+            display: flex; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .score-modal.hidden { display: none; }
+        .score-modal-inner {
+            background: #fff; border-radius: 14px; padding: 32px; width: 360px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.2);
+        }
+        .score-modal-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .score-modal-sub   { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+        .star-picker { display: flex; gap: 8px; margin-bottom: 24px; justify-content: center; }
+        .star-picker .star {
+            font-size: 36px; cursor: pointer; transition: transform .1s; color: #d1d5db;
+        }
+        .star-picker .star.active { color: #f59e0b; }
+        .star-picker .star:hover  { transform: scale(1.15); }
+        .score-modal-actions { display: flex; gap: 12px; }
+        .score-modal-actions .btn { flex: 1; padding: 11px; }
+
+        .empty-state { text-align: center; padding: 60px 0; color: var(--text-secondary); font-size: 14px; }
+
+        .remark-cell { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<div class="admin-body">
+    <div class="page-title">报名审核</div>
+    <div class="page-subtitle">审核志愿者报名申请，对已完成活动进行评分</div>
+
+        <!-- 筛选栏 -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>选择活动</label>
+                <select class="filter-select" id="activityFilter">
+                    <option value="">全部活动</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>审核状态</label>
+                <select class="filter-select" id="statusFilter">
+                    <option value="">全部状态</option>
+                    <option value="0">待审核</option>
+                    <option value="1">已通过</option>
+                    <option value="2">已拒绝</option>
+                    <option value="3">已完成</option>
+                    <option value="4">已取消</option>
+                </select>
+            </div>
+        </div>
+
+        <p class="total-hint" id="totalHint">加载中...</p>
+
+        <table class="reg-table">
+            <thead>
+                <tr>
+                    <th>志愿者</th>
+                    <th>活动</th>
+                    <th>报名岗位</th>
+                    <th>报名时间</th>
+                    <th>状态</th>
+                    <th>评分</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="7" class="empty-state">加载中...</td></tr>
+            </tbody>
+        </table>
+
+        <div class="pagination" id="pagination" style="margin-top:20px;"></div>
+</div>
+
+<!-- 评分弹窗 -->
+<div class="score-modal hidden" id="scoreModal">
+    <div class="score-modal-inner">
+        <div class="score-modal-title">为志愿者评分</div>
+        <div class="score-modal-sub" id="scoreModalSub">请为该志愿者的本次服务打分</div>
+        <div class="star-picker" id="starPicker">
+            <span class="star" data-v="1">★</span>
+            <span class="star" data-v="2">★</span>
+            <span class="star" data-v="3">★</span>
+            <span class="star" data-v="4">★</span>
+            <span class="star" data-v="5">★</span>
+        </div>
+        <div class="score-modal-actions">
+            <button class="btn btn-primary" onclick="confirmScore()">确认评分</button>
+            <button class="btn btn-outline" onclick="closeScoreModal()">取消</button>
+        </div>
+    </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+    requireAuth(1);
+    renderNavbar('admin');
+    renderSidebar('registrations');
+
+    let pageNum = 1;
+    const pageSize = 15;
+    let scoreTargetId  = null;
+    let selectedScore  = 0;
+
+    // 加载活动列表到下拉框
+    async function loadActivityOptions() {
+        try {
+            const data = await get('/api/activities', { pageNum: 1, pageSize: 100 });
+            const sel = document.getElementById('activityFilter');
+            (data.list || []).forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.id;
+                opt.textContent = a.title;
+                sel.appendChild(opt);
+            });
+        } catch (e) {}
+    }
+
+    document.getElementById('activityFilter').addEventListener('change', () => { pageNum = 1; load(); });
+    document.getElementById('statusFilter').addEventListener('change',  () => { pageNum = 1; load(); });
+
+    async function load() {
+        const activityId = document.getElementById('activityFilter').value;
+        const status     = document.getElementById('statusFilter').value;
+
+        try {
+            let data;
+            if (!activityId) {
+                document.getElementById('totalHint').textContent = '请先选择一个活动';
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" class="empty-state">请在上方选择活动后查看报名记录</td></tr>`;
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+            const params = { pageNum, pageSize };
+            if (status !== '') params.status = Number(status);
+            data = await get(`/api/registrations/activity/${activityId}`, params);
+            document.getElementById('totalHint').textContent = `找到 ${data.total} 条报名记录`;
+            renderTable(data.list || []);
+            renderPagination(document.getElementById('pagination'), data.total, pageNum, pageSize, p => {
+                pageNum = p; load();
+            });
+        } catch (e) {
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" class="empty-state">加载失败，请稍后重试</td></tr>`;
+        }
+    }
+
+    function renderTable(list) {
+        const tbody = document.getElementById('tableBody');
+        if (list.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="empty-state">暂无报名记录</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = list.map(r => {
+            const st = registrationStatusInfo(r.status);
+            // 评分列
+            let scoreCell = '<span style="color:var(--text-secondary);font-size:13px">未评分</span>';
+            if (r.score != null) {
+                scoreCell = `<div class="score-display">
+                    <span class="score-stars">${'★'.repeat(Math.round(r.score / 20))}${'☆'.repeat(5 - Math.round(r.score / 20))}</span>
+                    <span class="score-num">${r.score}</span>
+                </div>`;
+            }
+            // 操作列
+            let opsCell = '—';
+            if (r.status === 0) {
+                // 待审核
+                opsCell = `<div class="ops-btns">
+                    <button class="btn-approve" onclick="review(${r.id}, 1)">✓ 通过</button>
+                    <button class="btn-reject"  onclick="review(${r.id}, 2)">✕ 拒绝</button>
+                </div>`;
+            } else if (r.status === 3 && r.score == null) {
+                // 已完成未评分
+                opsCell = `<button class="btn-score" onclick="openScoreModal(${r.id}, '${escapeHtml(r.realName || r.volunteerName || '')}')">★ 打分</button>`;
+            }
+
+            return `<tr>
+                <td class="volunteer-cell">
+                    <div class="vol-name">${escapeHtml(r.realName || r.volunteerName || r.userName || '—')}</div>
+                    <div class="vol-id">${escapeHtml(r.studentId || '')}</div>
+                </td>
+                <td style="font-size:13px">${escapeHtml(r.activityTitle || r.title || '—')}</td>
+                <td style="font-size:13px;color:var(--text-secondary)">${escapeHtml(r.positionName || '—')}</td>
+                <td style="font-size:13px;color:var(--text-secondary)">${formatTime(r.createdAt)}</td>
+                <td><span class="badge ${st.cls}">${st.text}</span></td>
+                <td>${scoreCell}</td>
+                <td>${opsCell}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function review(regId, status) {
+        const action = status === 1 ? '通过' : '拒绝';
+        const ok = await showConfirm(`确认${action}`, `确定要${action}这条报名申请吗？`);
+        if (!ok) return;
+        try {
+            await patch(`/api/registrations/${regId}/status`, { status });
+            showToast(`已${action}报名`, 'success');
+            load();
+        } catch (e) {}
+    }
+
+    /* ---------- 评分弹窗 ---------- */
+    function openScoreModal(regId, name) {
+        scoreTargetId = regId;
+        selectedScore = 0;
+        document.getElementById('scoreModalSub').textContent = `为「${name}」的本次服务打分`;
+        updateStars(0);
+        document.getElementById('scoreModal').classList.remove('hidden');
+    }
+
+    function closeScoreModal() {
+        document.getElementById('scoreModal').classList.add('hidden');
+        scoreTargetId = null;
+    }
+
+    document.getElementById('starPicker').addEventListener('click', e => {
+        const star = e.target.closest('.star');
+        if (star) { selectedScore = Number(star.dataset.v); updateStars(selectedScore); }
+    });
+    document.getElementById('starPicker').addEventListener('mouseover', e => {
+        const star = e.target.closest('.star');
+        if (star) updateStars(Number(star.dataset.v));
+    });
+    document.getElementById('starPicker').addEventListener('mouseleave', () => updateStars(selectedScore));
+
+    function updateStars(val) {
+        document.querySelectorAll('#starPicker .star').forEach((s, i) => {
+            s.classList.toggle('active', i < val);
+        });
+    }
+
+    async function confirmScore() {
+        if (!selectedScore) { showToast('请先选择星级', 'error'); return; }
+        try {
+            // API 评分传 1-5 分，后端存储方式以 API 文档为准
+            await patch(`/api/registrations/${scoreTargetId}/score`, { score: selectedScore * 20 });
+            showToast('评分成功', 'success');
+            closeScoreModal();
+            load();
+        } catch (e) {}
+    }
+
+    // 点击遮罩关闭弹窗
+    document.getElementById('scoreModal').addEventListener('click', e => {
+        if (e.target === document.getElementById('scoreModal')) closeScoreModal();
+    });
+
+    loadActivityOptions();
+    load();
+</script>
+</body>
+</html>

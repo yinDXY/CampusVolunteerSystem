@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 志愿服务管理系统</title>
+    <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <div class="logo">志</div>
+            <h1>志愿服务管理系统</h1>
+            <p class="subtitle">欢迎回来，请登录您的账号</p>
+
+            <form id="loginForm" onsubmit="return handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">用户名</label>
+                    <input class="form-input" type="text" id="username" placeholder="请输入用户名" required>
+                    <div class="form-error" id="usernameError"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码</label>
+                    <input class="form-input" type="password" id="password" placeholder="请输入密码" required>
+                    <div class="form-error" id="passwordError"></div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="loginBtn" style="margin-top:8px">
+                    →) 登录
+                </button>
+            </form>
+
+            <p style="margin-top:20px; font-size:13px; color:var(--text-secondary)">
+                还没有账号？ <a href="register.html">立即注册</a>
+            </p>
+
+            <div class="test-accounts">
+                <strong>测试账号：</strong><br>
+                超级管理员：admin / 123456<br>
+                活动管理员：manager / 123456<br>
+                普通志愿者：user / 123456
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // 已登录则直接跳转
+        if (isLoggedIn()) {
+            window.location.href = getRole() >= 1 ? 'admin/activities.html' : 'activity-list.html';
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            // 前端校验
+            let valid = true;
+            if (!username) {
+                showFieldError('username', '请输入用户名'); valid = false;
+            } else { clearFieldError('username'); }
+            if (password.length < 6) {
+                showFieldError('password', '密码至少6个字符'); valid = false;
+            } else { clearFieldError('password'); }
+            if (!valid) return;
+
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.textContent = '登录中...';
+
+            try {
+                const data = await post('/api/auth/login', { username, password });
+                setAuth(data);
+                showToast('登录成功', 'success');
+                setTimeout(() => {
+                    window.location.href = data.role >= 1 ? 'admin/activities.html' : 'activity-list.html';
+                }, 500);
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = '→) 登录';
+            }
+        }
+
+        function showFieldError(field, msg) {
+            const group = document.getElementById(field).closest('.form-group');
+            group.classList.add('has-error');
+            group.querySelector('.form-error').textContent = msg;
+        }
+        function clearFieldError(field) {
+            const group = document.getElementById(field).closest('.form-group');
+            group.classList.remove('has-error');
+        }
+    </script>
+</body>
+</html>

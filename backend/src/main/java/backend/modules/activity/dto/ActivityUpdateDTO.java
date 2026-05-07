@@ -16,6 +16,7 @@ public class ActivityUpdateDTO {
     private String description;
     private String coverUrl;
     private String location;
+    private String organizer;
 
     @NotNull(message = "活动开始时间不能为空")
     private LocalDateTime startTime;
