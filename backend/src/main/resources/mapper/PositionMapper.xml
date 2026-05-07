@@ -20,10 +20,16 @@
     </select>
 
     <select id="selectByActivityId" resultType="backend.modules.position.dto.PositionVO">
-        SELECT id, activity_id, name, description, quota, assigned_count, required_hours, created_at
-        FROM `position`
-        WHERE activity_id = #{activityId} AND deleted = 0
-        ORDER BY created_at ASC
+        SELECT p.id, p.activity_id, p.name, p.description, p.quota,
+               p.assigned_count, p.required_hours, p.created_at,
+               GROUP_CONCAT(t.name ORDER BY t.name SEPARATOR '，') AS requirements
+        FROM `position` p
+        LEFT JOIN position_tag pt ON pt.position_id = p.id
+        LEFT JOIN tag t           ON t.id = pt.tag_id
+        WHERE p.activity_id = #{activityId} AND p.deleted = 0
+        GROUP BY p.id, p.activity_id, p.name, p.description,
+                 p.quota, p.assigned_count, p.required_hours, p.created_at
+        ORDER BY p.created_at ASC
     </select>
 
     <update id="updateById">
@@ -40,5 +46,22 @@
         UPDATE `position` SET deleted = 1, updated_at = NOW()
         WHERE id = #{id}
     </update>
+
+    <!-- ====== tag 操作 ====== -->
+    <select id="findTagIdByNameAndCategory" resultType="java.lang.Long">
+        SELECT id FROM tag WHERE name = #{name} AND category = #{category} LIMIT 1
+    </select>
+
+    <insert id="insertTagIfNotExists">
+        INSERT IGNORE INTO tag (name, category) VALUES (#{name}, #{category})
+    </insert>
+
+    <insert id="insertPositionTag">
+        INSERT IGNORE INTO position_tag (position_id, tag_id) VALUES (#{positionId}, #{tagId})
+    </insert>
+
+    <delete id="deletePositionTagsByPositionId">
+        DELETE FROM position_tag WHERE position_id = #{positionId}
+    </delete>
 
 </mapper>

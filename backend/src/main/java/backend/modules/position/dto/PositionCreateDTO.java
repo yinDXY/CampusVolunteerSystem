@@ -23,4 +23,7 @@ public class PositionCreateDTO {
     private Integer quota;
 
     private BigDecimal requiredHours;
+
+    /** 岗位需求技能标签名称列表（前端传入，后端写入 position_tag） */
+    private java.util.List<String> requirements;
 }

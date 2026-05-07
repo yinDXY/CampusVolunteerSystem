@@ -20,4 +20,17 @@ public interface PositionMapper {
 
     /** 逻辑删除 */
     int deleteById(@Param("id") Long id);
+
+    // ---- tag 操作 ----
+    /** 查询技能标签 ID；不存在返回 null */
+    Long findTagIdByNameAndCategory(@Param("name") String name, @Param("category") String category);
+
+    /** INSERT IGNORE：tag 已存在时不报错 */
+    void insertTagIfNotExists(@Param("name") String name, @Param("category") String category);
+
+    /** 写入 position_tag 关联；IGNORE 防重复 */
+    void insertPositionTag(@Param("positionId") Long positionId, @Param("tagId") Long tagId);
+
+    /** 删除某岗位的全部 tag 关联 */
+    void deletePositionTagsByPositionId(@Param("positionId") Long positionId);
 }

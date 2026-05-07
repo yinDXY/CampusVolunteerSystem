@@ -15,5 +15,7 @@ public class PositionVO {
     private Integer quota;
     private Integer assignedCount;
     private BigDecimal requiredHours;
+    /** 需求技能标签（逗号分隔，来自 position_tag JOIN tag） */
+    private String requirements;
     private LocalDateTime createdAt;
 }

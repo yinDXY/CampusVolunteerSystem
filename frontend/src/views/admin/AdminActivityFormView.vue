@@ -185,7 +185,7 @@ async function submitForm() {
           name: pos.name.trim(),
           description: pos.description.trim(),
           quota: pos.quota,
-          requirements: pos.requirements.filter((r) => r.trim()).join('，'),
+          requirements: pos.requirements.filter((r) => r.trim()),
         }
         if (pos.id) {
           await put(`/api/positions/${pos.id}`, posBody)

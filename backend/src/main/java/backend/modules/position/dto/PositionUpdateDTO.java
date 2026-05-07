@@ -20,4 +20,7 @@ public class PositionUpdateDTO {
     private Integer quota;
 
     private BigDecimal requiredHours;
+
+    /** 岗位需求技能标签名称列表，null 表示不修改，空列表表示清空 */
+    private java.util.List<String> requirements;
 }

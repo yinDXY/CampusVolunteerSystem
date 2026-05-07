@@ -38,6 +38,7 @@ public class PositionServiceImpl implements PositionService {
                 .requiredHours(dto.getRequiredHours())
                 .build();
         positionMapper.insert(position);
+        saveRequirements(position.getId(), dto.getRequirements());
         return position.getId();
     }
 
@@ -63,6 +64,10 @@ public class PositionServiceImpl implements PositionService {
         existing.setQuota(dto.getQuota());
         existing.setRequiredHours(dto.getRequiredHours());
         positionMapper.updateById(existing);
+        if (dto.getRequirements() != null) {
+            positionMapper.deletePositionTagsByPositionId(id);
+            saveRequirements(id, dto.getRequirements());
+        }
     }
 
     @Override
@@ -81,6 +86,20 @@ public class PositionServiceImpl implements PositionService {
     private void checkOwnerOrAdmin(Long creatorId, Long operatorId, Integer operatorRole) {
         if (operatorRole != 2 && !creatorId.equals(operatorId)) {
             throw new AppException(ResultCode.FORBIDDEN);
+        }
+    }
+
+    /** 将标签名称列表写入 tag + position_tag；跳过空字符串 */
+    private void saveRequirements(Long positionId, java.util.List<String> requirements) {
+        if (requirements == null || requirements.isEmpty()) return;
+        for (String name : requirements) {
+            String trimmed = name.trim();
+            if (trimmed.isEmpty()) continue;
+            positionMapper.insertTagIfNotExists(trimmed, "SKILL");
+            Long tagId = positionMapper.findTagIdByNameAndCategory(trimmed, "SKILL");
+            if (tagId != null) {
+                positionMapper.insertPositionTag(positionId, tagId);
+            }
         }
     }
 }
