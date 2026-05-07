@@ -26,7 +26,7 @@ public class QrCodeController {
      *       Spring Task 同时每分钟自动刷新，前端只需轮询本接口。
      */
     @GetMapping("/qrcode/{activityId}")
-    @PreAuthorize("hasAnyRole('ACTIVITY_ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public R<QrCodeVO> getQrCode(@PathVariable Long activityId) {
         return R.ok(qrCodeService.getQrCode(activityId));
     }

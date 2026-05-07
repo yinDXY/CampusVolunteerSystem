@@ -115,7 +115,9 @@ watch(
 
     <template v-else-if="activity">
       <div class="banner">
-        <div class="bg" :style="{ background: bannerGrad }" />
+        <div class="bg" :style="activity.coverUrl
+          ? { backgroundImage: 'url(' + activity.coverUrl + ')', backgroundSize: 'cover', backgroundPosition: 'center' }
+          : { background: bannerGrad }" />
         <span class="badge" :class="activityStatusInfo(activity.status).cls">{{
           activityStatusInfo(activity.status).text
         }}</span>

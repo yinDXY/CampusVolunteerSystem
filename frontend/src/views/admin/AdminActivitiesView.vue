@@ -1,7 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
-import { get, del } from '../../lib/request.js'
+import { get, del, patch } from '../../lib/request.js'
 import { showToast, showConfirm } from '../../lib/ui.js'
 import { debounce } from '../../utils/debounce.js'
 import { activityStatusInfo, formatDate, getCategoryLabel } from '../../utils/display.js'
@@ -42,6 +42,37 @@ function setPage(p) {
   load()
 }
 
+/* ===== 状态切换 ===== */
+const STATUS_TRANSITIONS = {
+  0: [{ to: 1, label: '开始报名' }],
+  1: [{ to: 2, label: '开始进行' }, { to: 4, label: '取消活动' }],
+  2: [{ to: 3, label: '结束活动' }, { to: 4, label: '取消活动' }],
+  3: [],
+  4: [],
+}
+const STATUS_LABELS = { 0: '草稿', 1: '报名中', 2: '进行中', 3: '已结束', 4: '已取消' }
+const openMenuId = ref(null)
+
+function toggleMenu(id, e) {
+  e.stopPropagation()
+  openMenuId.value = openMenuId.value === id ? null : id
+}
+function closeMenu() {
+  openMenuId.value = null
+}
+
+async function changeStatus(id, toStatus, label, e) {
+  e.stopPropagation()
+  openMenuId.value = null
+  const ok = await showConfirm('切换活动状态', `确认将活动状态切换为「${STATUS_LABELS[toStatus]}」？`)
+  if (!ok) return
+  try {
+    await patch(`/api/activities/${id}/status?status=${toStatus}`)
+    showToast(`已切换为：${STATUS_LABELS[toStatus]}`, 'success')
+    load()
+  } catch { /* */ }
+}
+
 async function deleteActivity(id, title) {
   const ok = await showConfirm('确认删除', `确定要删除活动「${title}」吗？此操作不可恢复。`)
   if (!ok) return
@@ -59,7 +90,13 @@ function onStatusChange() {
   load()
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  document.addEventListener('click', closeMenu)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', closeMenu)
+})
 </script>
 
 <template>
@@ -179,6 +216,27 @@ onMounted(load)
               >
                 ✏
               </button>
+              <!-- 状态切换 -->
+              <div
+                v-if="(STATUS_TRANSITIONS[a.status] || []).length > 0"
+                class="status-menu-wrap"
+              >
+                <button
+                  type="button"
+                  class="btn-icon status"
+                  title="切换状态"
+                  @click="toggleMenu(a.id, $event)"
+                >⚙</button>
+                <div class="status-menu" :class="{ open: openMenuId === a.id }">
+                  <div
+                    v-for="next in STATUS_TRANSITIONS[a.status]"
+                    :key="next.to"
+                    class="status-menu-item"
+                    @click="changeStatus(a.id, next.to, next.label, $event)"
+                  >{{ next.label }} → {{ STATUS_LABELS[next.to] }}</div>
+                </div>
+              </div>
+              <span v-else style="width: 32px; display: inline-block"></span>
               <button type="button" class="btn-icon delete" title="删除" @click="deleteActivity(a.id, a.title)">
                 🗑
               </button>
@@ -380,6 +438,44 @@ onMounted(load)
 }
 .btn-icon.delete:hover {
   background: #fecaca;
+}
+.btn-icon.status {
+  background: #fef9c3;
+  color: #854d0e;
+}
+.btn-icon.status:hover {
+  background: #fde047;
+}
+.status-menu-wrap {
+  position: relative;
+}
+.status-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 36px;
+  z-index: 200;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  min-width: 140px;
+  padding: 6px 0;
+}
+.status-menu.open {
+  display: block;
+}
+.status-menu-item {
+  padding: 9px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--text-primary);
+  transition: background 0.1s;
+}
+.status-menu-item:hover {
+  background: var(--primary-light);
+  color: var(--primary);
 }
 .total-hint {
   font-size: 13px;

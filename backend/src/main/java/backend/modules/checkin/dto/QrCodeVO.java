@@ -11,4 +11,6 @@ public class QrCodeVO {
     private String qrCodeBase64;
     /** 令牌过期时间 */
     private LocalDateTime expireTime;
+    /** 签到令牌（UUID），供管理员展示给志愿者使用 */
+    private String token;
 }

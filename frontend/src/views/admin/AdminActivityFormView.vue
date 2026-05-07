@@ -164,10 +164,10 @@ async function submitForm() {
     organizer: org,
     totalQuota: tq,
     status: stNum,
-    startTime: st + ' 00:00:00',
-    endTime: et + ' 23:59:59',
+    startTime: st + 'T00:00:00',
+    endTime: et + 'T23:59:59',
   }
-  if (cover) activityData.coverImage = cover
+  if (cover) activityData.coverUrl = cover
 
   submitting.value = true
   try {

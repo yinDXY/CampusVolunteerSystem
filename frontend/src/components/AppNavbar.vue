@@ -35,6 +35,13 @@ function logout() {
       </RouterLink>
       <RouterLink
         v-if="role < 1"
+        to="/my-activities"
+        :class="{ active: activePage === 'my-activities' }"
+      >
+        我的活动
+      </RouterLink>
+      <RouterLink
+        v-if="role < 1"
         to="/profile"
         :class="{ active: activePage === 'profile' }"
       >

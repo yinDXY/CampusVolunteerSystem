@@ -37,6 +37,12 @@ const routes = [
         meta: { nav: 'activities', title: '活动详情 - 志愿服务管理系统' },
       },
       {
+        path: 'my-activities',
+        name: 'my-activities',
+        component: () => import('../views/MyActivitiesView.vue'),
+        meta: { nav: 'my-activities', title: '我的活动 - 志愿服务管理系统' },
+      },
+      {
         path: 'profile',
         name: 'profile',
         component: () => import('../views/ProfileView.vue'),

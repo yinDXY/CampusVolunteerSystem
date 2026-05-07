@@ -77,7 +77,11 @@ function loadQRCode() {
         qrImage.value = data.qrCodeBase64
         qrPlaceholder.value = false
         if (currentActivity.value) {
-          qrTokenDisplay.value = `CHECKIN_${currentActivity.value.id}_${Date.now()}`
+          // 显示 QR 码实际内容（JSON），方便志愿者手动输入
+          const t = data.token || ''
+          qrTokenDisplay.value = t
+            ? `{"activityId":${currentActivity.value.id},"token":"${t}"}`
+            : `CHECKIN_${currentActivity.value.id}`
         }
       }
     })

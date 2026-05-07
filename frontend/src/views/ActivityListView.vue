@@ -127,7 +127,9 @@ onMounted(() => {
       :to="'/activities/' + a.id"
       class="activity-card"
     >
-      <div class="cover" :style="{ background: GRADIENTS[i % GRADIENTS.length] }">
+      <div class="cover" :style="a.coverUrl
+        ? { backgroundImage: 'url(' + a.coverUrl + ')', backgroundSize: 'cover', backgroundPosition: 'center' }
+        : { background: GRADIENTS[i % GRADIENTS.length] }">
         <span class="badge" :class="activityStatusInfo(a.status).cls" style="position: absolute; top: 12px; right: 12px">
           {{ activityStatusInfo(a.status).text }}
         </span>

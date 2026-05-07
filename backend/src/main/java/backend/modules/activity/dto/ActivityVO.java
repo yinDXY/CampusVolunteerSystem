@@ -12,6 +12,7 @@ public class ActivityVO {
     private String description;
     private String coverUrl;
     private String location;
+    private String organizer;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private LocalDateTime signStartTime;

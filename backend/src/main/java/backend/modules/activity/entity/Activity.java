@@ -21,6 +21,7 @@ public class Activity {
     private LocalDateTime endTime;
     private LocalDateTime signStartTime;
     private LocalDateTime signEndTime;
+    private String organizer;
     private Integer totalQuota;
     private Integer signedCount;
     /**

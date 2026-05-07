@@ -63,6 +63,7 @@ public class QrCodeServiceImpl implements QrCodeService {
         QrCodeVO vo = new QrCodeVO();
         vo.setQrCodeBase64(base64);
         vo.setExpireTime(expireTime);
+        vo.setToken(token);
         return vo;
     }
 
