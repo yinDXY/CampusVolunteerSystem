@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS activity (
     description     TEXT          DEFAULT NULL            COMMENT '活动描述',
     cover_url       VARCHAR(500)  DEFAULT NULL            COMMENT '封面图URL',
     location        VARCHAR(200)  DEFAULT NULL            COMMENT '活动地点',
+        organizer       VARCHAR(200)  DEFAULT NULL            COMMENT '主办单位',
     start_time      DATETIME      NOT NULL                COMMENT '活动开始时间',
     end_time        DATETIME      NOT NULL                COMMENT '活动结束时间',
     sign_start_time DATETIME      DEFAULT NULL            COMMENT '报名开始时间',
